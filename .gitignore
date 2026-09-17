@@ -1,0 +1,25 @@
+﻿# Local Configuration & Credentials
+config.json
+.env
+.env.*
+!.env.example
+
+# Caches & Tokens
+.spotify_token_cache
+.lyrics_cache/
+
+# Python Bytecode & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.spec
+venv/
+.venv/
+env/
+
+# OS and IDE files
+*.lnk
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
