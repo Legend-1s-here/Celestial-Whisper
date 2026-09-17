@@ -3,7 +3,7 @@ import os
 import threading
 from pathlib import Path
 
-# Set Windows App User Model ID so it groups nicely in taskbar with custom icon
+# Set Windows App User Model ID so taskbar shows custom icon
 if os.name == "nt":
     try:
         import ctypes
@@ -63,12 +63,8 @@ class ApplicationController:
         self.preview_timer = QTimer()
         self.preview_timer.timeout.connect(self._update_preview)
 
-        # Spotify / Windows Media worker thread
-        self.spotify_worker = SpotifyWorker(
-            client_id=self.config.get("spotify_client_id", ""),
-            client_secret=self.config.get("spotify_client_secret", ""),
-            redirect_uri=self.config.get("spotify_redirect_uri", "http://127.0.0.1:8888/callback")
-        )
+        # Windows Media worker thread (no login or API keys needed!)
+        self.spotify_worker = SpotifyWorker()
         self.spotify_worker.track_changed.connect(self._on_track_changed)
         self.spotify_worker.position_updated.connect(self._on_position_updated)
         self.spotify_worker.status_message.connect(self._on_status_message)
@@ -123,12 +119,6 @@ class ApplicationController:
         self.config = new_config
         save_config(self.config)
         self.overlay.apply_config(self.config)
-
-        self.spotify_worker.update_credentials(
-            client_id=self.config.get("spotify_client_id", ""),
-            client_secret=self.config.get("spotify_client_secret", ""),
-            redirect_uri=self.config.get("spotify_redirect_uri", "")
-        )
 
     def start_preview_mode(self):
         import time

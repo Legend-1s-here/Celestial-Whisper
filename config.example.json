@@ -1,7 +1,4 @@
 ﻿{
-  "spotify_client_id": "",
-  "spotify_client_secret": "",
-  "spotify_redirect_uri": "http://127.0.0.1:8888/callback",
   "position": "bottom",
   "font_size": 24,
   "text_color": "#FFB7C5",

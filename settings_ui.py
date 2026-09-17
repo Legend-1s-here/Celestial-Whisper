@@ -1,13 +1,11 @@
 import sys
 import os
-import webbrowser
 from pathlib import Path
-from PyQt6.QtCore import Qt, pyqtSignal, QRect
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QRadioButton, QButtonGroup, QSlider,
-    QCheckBox, QTabWidget, QWidget, QFrame, QMessageBox,
-    QColorDialog
+    QCheckBox, QWidget, QFrame, QColorDialog
 )
 from PyQt6.QtGui import QFont, QColor, QPainter, QPixmap
 
@@ -21,7 +19,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.config = dict(config)
         self.setWindowTitle("🌸 Celestial Whisper — 設定 (Settings)")
-        self.setFixedSize(650, 720)
+        self.setFixedSize(590, 710)
 
         self.bg_pixmap = None
         if BG_IMAGE_PATH.exists():
@@ -37,44 +35,6 @@ class SettingsDialog(QDialog):
                 color: #F0F0F8;
                 font-size: 10pt;
                 background: transparent;
-            }
-            QLineEdit {
-                background-color: rgba(22, 24, 38, 0.92);
-                border: 1px solid rgba(255, 183, 197, 0.35);
-                border-radius: 6px;
-                padding: 8px 12px;
-                color: #FFFFFF;
-                font-size: 10pt;
-                min-height: 24px;
-            }
-            QLineEdit:focus {
-                border: 1.5px solid #FF8DA1;
-                background-color: rgba(30, 32, 50, 0.98);
-            }
-            QTabWidget::pane {
-                border: 1px solid rgba(255, 183, 197, 0.3);
-                border-radius: 10px;
-                background: rgba(18, 20, 32, 0.88);
-                top: -1px;
-            }
-            QTabBar::tab {
-                background: rgba(22, 24, 38, 0.8);
-                color: #B5B8CD;
-                padding: 10px 22px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                font-weight: 600;
-                font-size: 10pt;
-                margin-right: 6px;
-                border: 1px solid rgba(255, 183, 197, 0.2);
-                border-bottom: none;
-            }
-            QTabBar::tab:selected {
-                background: rgba(36, 38, 58, 0.96);
-                color: #FFB7C5;
-                border-top: 2.5px solid #FF8DA1;
-                border-left: 1px solid rgba(255, 183, 197, 0.4);
-                border-right: 1px solid rgba(255, 183, 197, 0.4);
             }
             QPushButton {
                 background-color: rgba(35, 38, 58, 0.92);
@@ -185,21 +145,22 @@ class SettingsDialog(QDialog):
             x = (scaled.width() - self.width()) // 2
             y = (scaled.height() - self.height()) // 2
             painter.drawPixmap(0, 0, scaled, x, y, self.width(), self.height())
-            painter.fillRect(self.rect(), QColor(14, 16, 26, 205))
+            painter.fillRect(self.rect(), QColor(14, 16, 26, 210))
         else:
             painter.fillRect(self.rect(), QColor(18, 19, 29))
 
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(24, 18, 24, 18)
-        main_layout.setSpacing(12)
+        main_layout.setContentsMargins(22, 18, 22, 18)
+        main_layout.setSpacing(10)
 
+        # Header
         header_layout = QHBoxLayout()
         title_box = QVBoxLayout()
         title_box.setSpacing(2)
 
         title_label = QLabel("🌸 桜 Celestial Whisper • 設定")
-        title_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #FFFFFF;")
+        title_label.setStyleSheet("font-size: 13.5pt; font-weight: bold; color: #FFFFFF;")
         title_box.addWidget(title_label)
 
         subtitle_label = QLabel("Spotify 浮動歌詞オーバーレイ • Floating Subtitles")
@@ -210,97 +171,29 @@ class SettingsDialog(QDialog):
         header_layout.addStretch()
         main_layout.addLayout(header_layout)
 
-        self.tabs = QTabWidget()
-        self.tabs.addTab(self._create_spotify_tab(), "🎵 再生設定 (Playback)")
-        self.tabs.addTab(self._create_appearance_tab(), "🌸 位置 ＆ スタイル (Position ＆ Style)")
-        main_layout.addWidget(self.tabs)
-
-        btn_layout = QHBoxLayout()
-
-        self.btn_test = QPushButton("▶ Test Floating Lyrics")
-        self.btn_test.setObjectName("testBtn")
-        self.btn_test.clicked.connect(self._on_test_clicked)
-        btn_layout.addWidget(self.btn_test)
-
-        btn_layout.addStretch()
-
-        self.btn_cancel = QPushButton("Cancel")
-        self.btn_cancel.clicked.connect(self.reject)
-        btn_layout.addWidget(self.btn_cancel)
-
-        self.btn_save = QPushButton("Save && Apply")
-        self.btn_save.setObjectName("primaryBtn")
-        self.btn_save.clicked.connect(self._save_and_close)
-        btn_layout.addWidget(self.btn_save)
-
-        main_layout.addLayout(btn_layout)
-
-    def _create_spotify_tab(self) -> QWidget:
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-
-        info_box = QFrame()
-        info_box.setStyleSheet("""
+        # Status badge (Plug & Play - No login needed!)
+        status_box = QFrame()
+        status_box.setStyleSheet("""
             QFrame {
                 background-color: rgba(26, 28, 44, 0.88);
-                border: 1px solid rgba(255, 183, 197, 0.28);
+                border: 1px solid rgba(29, 185, 84, 0.4);
                 border-radius: 8px;
             }
         """)
-        info_layout = QVBoxLayout(info_box)
-        info_layout.setContentsMargins(16, 16, 16, 16)
-        info_layout.setSpacing(10)
+        status_layout = QHBoxLayout(status_box)
+        status_layout.setContentsMargins(14, 8, 14, 8)
+        status_layout.setSpacing(8)
 
-        info_title = QLabel("✨ Native Windows Media Mode (Active)")
-        info_title.setStyleSheet("font-weight: bold; color: #1DB954; font-size: 11pt;")
-        info_layout.addWidget(info_title)
+        badge = QLabel("🟢 Native Auto-Detect Active")
+        badge.setStyleSheet("font-weight: bold; color: #1DB954; font-size: 9.5pt;")
+        status_layout.addWidget(badge)
 
-        guide_label = QLabel()
-        guide_label.setTextFormat(Qt.TextFormat.RichText)
-        guide_label.setText(
-            "<b>No Spotify Premium or API Keys Required!</b><br>"
-            "Celestial Whisper captures playback directly from Windows. It works out-of-the-box for "
-            "<span style='color:#FFB7C5;'><b>Spotify Free, Spotify Premium, Desktop & Web</b></span>.<br><br>"
-            "<i>(Optional) If you have a Spotify Developer App with Premium, you can enter credentials below:</i>"
-        )
-        guide_label.setStyleSheet("color: #E2E4F0; font-size: 9.5pt; line-height: 1.5;")
-        guide_label.setWordWrap(True)
-        info_layout.addWidget(guide_label)
+        desc = QLabel("Captures playback automatically. No login or API keys needed!")
+        desc.setStyleSheet("color: #B5B8CD; font-size: 8.5pt;")
+        status_layout.addWidget(desc)
+        status_layout.addStretch()
 
-        layout.addWidget(info_box)
-
-        lbl_id = QLabel("Spotify Client ID (Optional):")
-        lbl_id.setStyleSheet("font-weight: 600; color: #F0F0F8;")
-        layout.addWidget(lbl_id)
-        self.input_client_id = QLineEdit()
-        self.input_client_id.setPlaceholderText("Leave empty for Free mode")
-        layout.addWidget(self.input_client_id)
-
-        lbl_sec = QLabel("Spotify Client Secret (Optional):")
-        lbl_sec.setStyleSheet("font-weight: 600; color: #F0F0F8;")
-        layout.addWidget(lbl_sec)
-        self.input_client_secret = QLineEdit()
-        self.input_client_secret.setEchoMode(QLineEdit.EchoMode.Password)
-        self.input_client_secret.setPlaceholderText("Leave empty for Free mode")
-        layout.addWidget(self.input_client_secret)
-
-        lbl_uri = QLabel("Redirect URI:")
-        lbl_uri.setStyleSheet("font-weight: 600; color: #F0F0F8;")
-        layout.addWidget(lbl_uri)
-        self.input_redirect_uri = QLineEdit()
-        self.input_redirect_uri.setText("http://127.0.0.1:8888/callback")
-        layout.addWidget(self.input_redirect_uri)
-
-        layout.addStretch()
-        return tab
-
-    def _create_appearance_tab(self) -> QWidget:
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(10)
+        main_layout.addWidget(status_box)
 
         # 1. Position Card
         pos_box = QFrame()
@@ -328,9 +221,9 @@ class SettingsDialog(QDialog):
 
         pos_layout.addWidget(self.radio_top)
         pos_layout.addWidget(self.radio_bottom)
-        layout.addWidget(pos_box)
+        main_layout.addWidget(pos_box)
 
-        # 2. Context Lines Mode Card (NEW: Option for Only Next Lyrics!)
+        # 2. Lyrics Display Mode Card
         ctx_box = QFrame()
         ctx_box.setStyleSheet("""
             QFrame {
@@ -359,7 +252,7 @@ class SettingsDialog(QDialog):
         ctx_layout.addWidget(self.radio_next_only)
         ctx_layout.addWidget(self.radio_both)
         ctx_layout.addWidget(self.radio_none)
-        layout.addWidget(ctx_box)
+        main_layout.addWidget(ctx_box)
 
         # 3. Width & Font Size Sliders Card
         size_box = QFrame()
@@ -372,9 +265,8 @@ class SettingsDialog(QDialog):
         """)
         size_layout = QVBoxLayout(size_box)
         size_layout.setContentsMargins(14, 10, 14, 10)
-        size_layout.setSpacing(8)
+        size_layout.setSpacing(6)
 
-        # Width slider
         self.lbl_width_val = QLabel("Overlay Width: 1400 px")
         self.lbl_width_val.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 9.5pt;")
         size_layout.addWidget(self.lbl_width_val)
@@ -386,7 +278,6 @@ class SettingsDialog(QDialog):
         self.slider_width.valueChanged.connect(self._on_width_slider_changed)
         size_layout.addWidget(self.slider_width)
 
-        # Font size slider
         self.lbl_size_val = QLabel("Font Size: 26 pt")
         self.lbl_size_val.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 9.5pt;")
         size_layout.addWidget(self.lbl_size_val)
@@ -397,7 +288,7 @@ class SettingsDialog(QDialog):
         self.slider_size.valueChanged.connect(self._on_size_slider_changed)
         size_layout.addWidget(self.slider_size)
 
-        layout.addWidget(size_box)
+        main_layout.addWidget(size_box)
 
         # 4. Active Lyric Color Card
         color_box = QFrame()
@@ -418,7 +309,7 @@ class SettingsDialog(QDialog):
 
         self.current_color = self.config.get("text_color", "#FFFFFF")
         self.color_preview = QPushButton()
-        self.color_preview.setFixedSize(46, 26)
+        self.color_preview.setFixedSize(44, 26)
         self._update_color_preview_btn()
         self.color_preview.clicked.connect(self._choose_color)
         color_layout.addWidget(self.color_preview)
@@ -444,7 +335,7 @@ class SettingsDialog(QDialog):
             color_layout.addWidget(btn)
 
         color_layout.addStretch()
-        layout.addWidget(color_box)
+        main_layout.addWidget(color_box)
 
         # 5. Lock Checkbox Card
         chk_box = QFrame()
@@ -461,10 +352,28 @@ class SettingsDialog(QDialog):
 
         self.chk_lock = QCheckBox("Lock position (prevent accidental mouse dragging)")
         chk_layout.addWidget(self.chk_lock)
-        layout.addWidget(chk_box)
+        main_layout.addWidget(chk_box)
 
-        layout.addStretch()
-        return tab
+        # Bottom Buttons
+        btn_layout = QHBoxLayout()
+
+        self.btn_test = QPushButton("▶ Test Floating Lyrics")
+        self.btn_test.setObjectName("testBtn")
+        self.btn_test.clicked.connect(self._on_test_clicked)
+        btn_layout.addWidget(self.btn_test)
+
+        btn_layout.addStretch()
+
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel.clicked.connect(self.reject)
+        btn_layout.addWidget(self.btn_cancel)
+
+        self.btn_save = QPushButton("Save && Apply")
+        self.btn_save.setObjectName("primaryBtn")
+        self.btn_save.clicked.connect(self._save_and_close)
+        btn_layout.addWidget(self.btn_save)
+
+        main_layout.addLayout(btn_layout)
 
     def _on_width_slider_changed(self, value):
         self.lbl_width_val.setText(f"Overlay Width: {value} px")
@@ -490,17 +399,12 @@ class SettingsDialog(QDialog):
         """)
 
     def _load_values(self):
-        self.input_client_id.setText(self.config.get("spotify_client_id", ""))
-        self.input_client_secret.setText(self.config.get("spotify_client_secret", ""))
-        self.input_redirect_uri.setText(self.config.get("spotify_redirect_uri", "http://127.0.0.1:8888/callback"))
-
         pos = self.config.get("position", "bottom")
         if pos == "top":
             self.radio_top.setChecked(True)
         else:
             self.radio_bottom.setChecked(True)
 
-        # Load context mode
         ctx_mode = self.config.get("context_mode", "next_only")
         if ctx_mode == "next_only":
             self.radio_next_only.setChecked(True)
@@ -524,9 +428,6 @@ class SettingsDialog(QDialog):
         self.test_lyrics_requested.emit()
 
     def _gather_into_config(self):
-        self.config["spotify_client_id"] = self.input_client_id.text().strip()
-        self.config["spotify_client_secret"] = self.input_client_secret.text().strip()
-        self.config["spotify_redirect_uri"] = self.input_redirect_uri.text().strip() or "http://127.0.0.1:8888/callback"
         self.config["position"] = "top" if self.radio_top.isChecked() else "bottom"
 
         if self.radio_next_only.isChecked():
