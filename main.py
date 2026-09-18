@@ -3,7 +3,6 @@ import os
 import threading
 from pathlib import Path
 
-# Set Windows App User Model ID so taskbar shows custom icon
 if os.name == "nt":
     try:
         import ctypes
@@ -50,7 +49,7 @@ class ApplicationController:
             self.app.setWindowIcon(QIcon(str(ICON_PATH)))
 
         self.config = load_config()
-        self.lyrics_manager = LyricsManager()
+        self.lyrics_manager = LyricsManager(language_mode=self.config.get("language_mode", "english"))
         self.overlay = FloatingLyricsOverlay(self.config)
         self.overlay.show()
 
@@ -63,7 +62,7 @@ class ApplicationController:
         self.preview_timer = QTimer()
         self.preview_timer.timeout.connect(self._update_preview)
 
-        # Windows Media worker thread (no login or API keys needed!)
+        # Windows Media worker thread
         self.spotify_worker = SpotifyWorker()
         self.spotify_worker.track_changed.connect(self._on_track_changed)
         self.spotify_worker.position_updated.connect(self._on_position_updated)
@@ -76,6 +75,7 @@ class ApplicationController:
         self.tray.open_settings.connect(self.show_settings)
         self.tray.position_changed.connect(self._set_position)
         self.tray.context_mode_changed.connect(self._set_context_mode)
+        self.tray.language_mode_changed.connect(self._set_language_mode)
         self.tray.test_lyrics.connect(self.start_preview_mode)
         self.tray.action_exit.triggered.connect(self.close_app)
         self.tray.show()
@@ -100,6 +100,11 @@ class ApplicationController:
         save_config(self.config)
         self.overlay.apply_config(self.config)
 
+    def _set_language_mode(self, mode: str):
+        self.config["language_mode"] = mode
+        save_config(self.config)
+        self.lyrics_manager.set_language_mode(mode)
+
     def _on_overlay_position_changed(self, mode: str):
         self.config["position"] = mode
         save_config(self.config)
@@ -119,6 +124,7 @@ class ApplicationController:
         self.config = new_config
         save_config(self.config)
         self.overlay.apply_config(self.config)
+        self.lyrics_manager.set_language_mode(self.config.get("language_mode", "english"))
 
     def start_preview_mode(self):
         import time
@@ -156,7 +162,6 @@ class ApplicationController:
 
         title = track_info.get("title", "").strip()
         artist = track_info.get("artist", "").strip()
-        is_playing = track_info.get("is_playing", False)
 
         if not title:
             self.overlay.showStatus("🎶 Spotify Idle", "Play a song on Spotify to see floating lyrics")
@@ -165,7 +170,10 @@ class ApplicationController:
         self.overlay.showStatus(f"🎵 {title}", f"by {artist}" if artist else "")
 
         def fetch_task():
-            found = self.lyrics_manager.fetch_lyrics(artist, title)
+            found = self.lyrics_manager.fetch_lyrics(
+                artist, title,
+                language_mode=self.config.get("language_mode", "english")
+            )
             if not found:
                 self.overlay.showStatus(f"🎵 {title}", "(No synchronized lyrics found)")
 

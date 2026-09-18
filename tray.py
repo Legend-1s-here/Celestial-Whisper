@@ -25,6 +25,7 @@ class SystemTray(QSystemTrayIcon):
     open_settings = pyqtSignal()
     position_changed = pyqtSignal(str)
     context_mode_changed = pyqtSignal(str)
+    language_mode_changed = pyqtSignal(str)
     test_lyrics = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -72,7 +73,16 @@ class SystemTray(QSystemTrayIcon):
         self.action_top.triggered.connect(lambda: self.position_changed.emit("top"))
         self.action_bottom.triggered.connect(lambda: self.position_changed.emit("bottom"))
 
-        # Context Mode submenu
+        # Language submenu
+        lang_menu = menu.addMenu("🌐 Language")
+        self.action_lang_en = lang_menu.addAction("English Translation")
+        self.action_lang_rom = lang_menu.addAction("English Romanized (Hinglish)")
+        self.action_lang_orig = lang_menu.addAction("Original Language")
+        self.action_lang_en.triggered.connect(lambda: self.language_mode_changed.emit("english"))
+        self.action_lang_rom.triggered.connect(lambda: self.language_mode_changed.emit("romanized"))
+        self.action_lang_orig.triggered.connect(lambda: self.language_mode_changed.emit("original"))
+
+        # Lyrics Display mode submenu
         ctx_menu = menu.addMenu("📜 Lyrics Display")
         self.action_next_only = ctx_menu.addAction("Next Lyric Only (2 lines)")
         self.action_both = ctx_menu.addAction("Both Prev & Next (3 lines)")

@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 from pathlib import Path
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -19,7 +19,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.config = dict(config)
         self.setWindowTitle("🌸 Celestial Whisper — 設定 (Settings)")
-        self.setFixedSize(590, 710)
+        self.setFixedSize(600, 780)
 
         self.bg_pixmap = None
         if BG_IMAGE_PATH.exists():
@@ -151,7 +151,7 @@ class SettingsDialog(QDialog):
 
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(22, 18, 22, 18)
+        main_layout.setContentsMargins(22, 16, 22, 16)
         main_layout.setSpacing(10)
 
         # Header
@@ -171,7 +171,7 @@ class SettingsDialog(QDialog):
         header_layout.addStretch()
         main_layout.addLayout(header_layout)
 
-        # Status badge (Plug & Play - No login needed!)
+        # Status badge
         status_box = QFrame()
         status_box.setStyleSheet("""
             QFrame {
@@ -205,8 +205,8 @@ class SettingsDialog(QDialog):
             }
         """)
         pos_layout = QVBoxLayout(pos_box)
-        pos_layout.setContentsMargins(14, 10, 14, 10)
-        pos_layout.setSpacing(6)
+        pos_layout.setContentsMargins(14, 8, 14, 8)
+        pos_layout.setSpacing(4)
 
         lbl_pos_title = QLabel("📍 Overlay Position on Screen")
         lbl_pos_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
@@ -223,7 +223,38 @@ class SettingsDialog(QDialog):
         pos_layout.addWidget(self.radio_bottom)
         main_layout.addWidget(pos_box)
 
-        # 2. Lyrics Display Mode Card
+        # 2. NEW: Language & English Translation Mode Card!
+        lang_box = QFrame()
+        lang_box.setStyleSheet("""
+            QFrame {
+                background-color: rgba(26, 28, 44, 0.88);
+                border: 1px solid rgba(255, 183, 197, 0.28);
+                border-radius: 8px;
+            }
+        """)
+        lang_layout = QVBoxLayout(lang_box)
+        lang_layout.setContentsMargins(14, 8, 14, 8)
+        lang_layout.setSpacing(4)
+
+        lbl_lang_title = QLabel("🌐 English Lyrics Option (Translation & Transliteration)")
+        lbl_lang_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
+        lang_layout.addWidget(lbl_lang_title)
+
+        self.radio_lang_english = QRadioButton("English Translation (Translates Hindi, Japanese, etc. to English)")
+        self.radio_lang_romanized = QRadioButton("English Romanized (Hinglish / Latin alphabet for Hindi songs)")
+        self.radio_lang_original = QRadioButton("Original Language (Native script: Hindi, Japanese, etc.)")
+
+        self.lang_group = QButtonGroup(self)
+        self.lang_group.addButton(self.radio_lang_english)
+        self.lang_group.addButton(self.radio_lang_romanized)
+        self.lang_group.addButton(self.radio_lang_original)
+
+        lang_layout.addWidget(self.radio_lang_english)
+        lang_layout.addWidget(self.radio_lang_romanized)
+        lang_layout.addWidget(self.radio_lang_original)
+        main_layout.addWidget(lang_box)
+
+        # 3. Lyrics Display Mode Card
         ctx_box = QFrame()
         ctx_box.setStyleSheet("""
             QFrame {
@@ -233,8 +264,8 @@ class SettingsDialog(QDialog):
             }
         """)
         ctx_layout = QVBoxLayout(ctx_box)
-        ctx_layout.setContentsMargins(14, 10, 14, 10)
-        ctx_layout.setSpacing(6)
+        ctx_layout.setContentsMargins(14, 8, 14, 8)
+        ctx_layout.setSpacing(4)
 
         lbl_ctx_title = QLabel("📜 Lyrics Lines Display")
         lbl_ctx_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
@@ -254,7 +285,7 @@ class SettingsDialog(QDialog):
         ctx_layout.addWidget(self.radio_none)
         main_layout.addWidget(ctx_box)
 
-        # 3. Width & Font Size Sliders Card
+        # 4. Width & Font Size Sliders Card
         size_box = QFrame()
         size_box.setStyleSheet("""
             QFrame {
@@ -264,7 +295,7 @@ class SettingsDialog(QDialog):
             }
         """)
         size_layout = QVBoxLayout(size_box)
-        size_layout.setContentsMargins(14, 10, 14, 10)
+        size_layout.setContentsMargins(14, 8, 14, 8)
         size_layout.setSpacing(6)
 
         self.lbl_width_val = QLabel("Overlay Width: 1400 px")
@@ -278,19 +309,19 @@ class SettingsDialog(QDialog):
         self.slider_width.valueChanged.connect(self._on_width_slider_changed)
         size_layout.addWidget(self.slider_width)
 
-        self.lbl_size_val = QLabel("Font Size: 26 pt")
+        self.lbl_size_val = QLabel("Font Size: 24 pt")
         self.lbl_size_val.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 9.5pt;")
         size_layout.addWidget(self.lbl_size_val)
 
         self.slider_size = QSlider(Qt.Orientation.Horizontal)
         self.slider_size.setRange(16, 44)
-        self.slider_size.setValue(26)
+        self.slider_size.setValue(24)
         self.slider_size.valueChanged.connect(self._on_size_slider_changed)
         size_layout.addWidget(self.slider_size)
 
         main_layout.addWidget(size_box)
 
-        # 4. Active Lyric Color Card
+        # 5. Active Lyric Color Card
         color_box = QFrame()
         color_box.setStyleSheet("""
             QFrame {
@@ -307,7 +338,7 @@ class SettingsDialog(QDialog):
         lbl_color.setStyleSheet("font-weight: bold; color: #FFB7C5;")
         color_layout.addWidget(lbl_color)
 
-        self.current_color = self.config.get("text_color", "#FFFFFF")
+        self.current_color = self.config.get("text_color", "#FFB7C5")
         self.color_preview = QPushButton()
         self.color_preview.setFixedSize(44, 26)
         self._update_color_preview_btn()
@@ -337,7 +368,7 @@ class SettingsDialog(QDialog):
         color_layout.addStretch()
         main_layout.addWidget(color_box)
 
-        # 5. Lock Checkbox Card
+        # 6. Lock Checkbox Card
         chk_box = QFrame()
         chk_box.setStyleSheet("""
             QFrame {
@@ -405,6 +436,14 @@ class SettingsDialog(QDialog):
         else:
             self.radio_bottom.setChecked(True)
 
+        lang_mode = self.config.get("language_mode", "english")
+        if lang_mode == "english":
+            self.radio_lang_english.setChecked(True)
+        elif lang_mode == "romanized":
+            self.radio_lang_romanized.setChecked(True)
+        else:
+            self.radio_lang_original.setChecked(True)
+
         ctx_mode = self.config.get("context_mode", "next_only")
         if ctx_mode == "next_only":
             self.radio_next_only.setChecked(True)
@@ -417,7 +456,7 @@ class SettingsDialog(QDialog):
         self.slider_width.setValue(width)
         self.lbl_width_val.setText(f"Overlay Width: {width} px")
 
-        size = self.config.get("font_size", 26)
+        size = self.config.get("font_size", 24)
         self.slider_size.setValue(size)
         self.lbl_size_val.setText(f"Font Size: {size} pt")
 
@@ -429,6 +468,13 @@ class SettingsDialog(QDialog):
 
     def _gather_into_config(self):
         self.config["position"] = "top" if self.radio_top.isChecked() else "bottom"
+
+        if self.radio_lang_english.isChecked():
+            self.config["language_mode"] = "english"
+        elif self.radio_lang_romanized.isChecked():
+            self.config["language_mode"] = "romanized"
+        else:
+            self.config["language_mode"] = "original"
 
         if self.radio_next_only.isChecked():
             self.config["context_mode"] = "next_only"

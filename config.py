@@ -10,6 +10,7 @@ DEFAULT_CONFIG = {
     "text_color": "#FFB7C5",
     "glow_color": "#000000",
     "context_mode": "next_only",  # "both", "next_only", "none"
+    "language_mode": "english",    # "english", "romanized", "original"
     "window_width": 1400,
     "window_height": 240,
     "lock_position": False
@@ -25,7 +26,6 @@ def load_config() -> dict:
         except Exception as e:
             print(f"Error loading config: {e}")
 
-    # Ensure ample dimensions
     if config.get("window_width", 0) < 1200:
         config["window_width"] = 1400
     if config.get("window_height", 0) < 220:
@@ -33,6 +33,8 @@ def load_config() -> dict:
 
     if "context_mode" not in config:
         config["context_mode"] = "next_only"
+    if "language_mode" not in config:
+        config["language_mode"] = "english"
 
     return config
 

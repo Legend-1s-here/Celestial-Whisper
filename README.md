@@ -22,7 +22,13 @@
 - 🌟 **100% Free — No Spotify Premium or Developer API Keys Needed**
   - Uses Windows Native Media Transport to track Spotify playback directly from Windows.
   - Works out of the box with **Spotify Free**, **Spotify Premium**, **Spotify Desktop App**, and **Spotify Web Player**.
-  - No `403 Forbidden` API limitations or complicated developer portal setup required!
+  - No `403 Forbidden` API limitations or login setup required!
+
+- 🌐 **English Lyrics Options (Translation & Transliteration)**
+  - **English Translation**: Translates Hindi, Japanese, Korean, Spanish, and foreign songs line-by-line into English meaning while preserving exact millisecond playback sync!
+  - **English Romanized (Hinglish / Latin Alphabet)**: Converts Devanagari Hindi into clean, readable English alphabet lyrics (e.g., *"Kesariya tera ishq hai piya"*).
+  - **Original Language**: Keep native scripts whenever preferred.
+  - Switch on the fly via Settings or System Tray!
 
 - 🌸 **Japanese Sakura Night Theme**
   - Atmospheric dark-mode Settings UI featuring **Mount Fuji**, a traditional **Torii gate**, a **5-story Pagoda**, a glowing **crescent moon**, and blossoming **Sakura cherry branches**.
@@ -47,10 +53,6 @@
   - Font size slider from **`16 pt` to `44 pt`**.
   - Color presets including **Sakura Pink (`#FFB7C5`)**, **Crisp White**, **Spotify Green**, **Neon Cyan**, and **Sunset Gold**.
 
-- ⚡ **Worldwide Language Support & Auto Caching**
-  - Fetches synced `.lrc` lyrics automatically via LRCLIB for English, Japanese, Korean, Spanish, Hindi, and tracks worldwide.
-  - Automatically caches lyrics locally for instantaneous loading on repeat listens.
-
 - 🚀 **Native App Launcher (No Terminal Window!)**
   - Desktop shortcut and Start Menu shortcut included.
   - Runs silently via `pythonw.exe` without opening a command prompt console.
@@ -73,7 +75,6 @@ cd Celestial-Whisper
 ```bash
 py -m pip install -r requirements.txt
 ```
-*(Or `pip install -r requirements.txt`)*
 
 ### 3. Create Desktop & Start Menu Shortcut (Recommended)
 Run the included PowerShell script to place a **Celestial Whisper** shortcut directly on your Desktop and Start Menu:
@@ -84,8 +85,6 @@ powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
 ---
 
 ## 🎮 How to Run
-
-You have several ways to launch the app:
 
 1. **Desktop Shortcut**: Double-click the **Celestial Whisper** icon on your Desktop (no terminal window will open).
 2. **Start Menu**: Press the **Windows Key**, type `Celestial Whisper`, and press `Enter`.
@@ -103,8 +102,9 @@ Once running, play any song on Spotify and watch the lyrics float on your screen
 | **Move Overlay** | Click and drag the floating lyrics with your mouse |
 | **Open Settings** | Double-click the lyrics (or right-click $\rightarrow$ *Settings*) |
 | **Quick Position Switch** | Right-click the lyrics $\rightarrow$ *Position* (*Top* or *Bottom Center*) |
-| **Toggle Show / Hide** | Left-click the **♫** tray icon in your Windows Taskbar |
+| **Switch Language Mode** | Right-click the **♫** tray icon $\rightarrow$ *Language* (*English Translation*, *Hinglish*, *Original*) |
 | **Change Lyrics Mode** | Right-click the **♫** tray icon $\rightarrow$ *Lyrics Display* (*Next Lyric Only*, *Both*, *Current Only*) |
+| **Toggle Show / Hide** | Left-click the **♫** tray icon in your Windows Taskbar |
 | **Exit** | Right-click the tray icon or overlay $\rightarrow$ *Exit* |
 
 ---
@@ -115,10 +115,10 @@ Once running, play any song on Spotify and watch the lyrics float on your screen
 Celestial-Whisper/
 ├── main.py                 # Application entry point & controller
 ├── overlay.py              # Frameless, transparent floating lyrics window
-├── settings_ui.py          # Japanese Sakura themed Settings UI
-├── spotify_client.py       # Dual-engine Spotify & Windows Media worker
+├── settings_ui.py          # Japanese Sakura themed Settings UI with English options
+├── spotify_client.py       # Windows Media worker (Spotify Free & Premium)
 ├── media_monitor.ps1       # Real-time Windows Media Session stream
-├── lyrics_fetcher.py       # Synced .lrc lyrics parser with local caching
+├── lyrics_fetcher.py       # Synced .lrc lyrics parser with translation & caching
 ├── tray.py                 # Windows Taskbar system tray menu
 ├── config.py               # Settings manager (loads/saves config.json)
 ├── config.example.json     # Configuration template
@@ -130,15 +130,6 @@ Celestial-Whisper/
 ├── requirements.txt        # Python package dependencies
 └── README.md               # Documentation
 ```
-
----
-
-## 🛠️ Built With
-
-- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) — High-performance cross-platform GUI toolkit
-- [syncedlyrics](https://github.com/rtkay123/syncedlyrics) — Time-synced `.lrc` lyrics fetching from LRCLIB
-- [spotipy](https://spotipy.readthedocs.io/) — Python client for the Spotify Web API
-- Windows Runtime (`Windows.Media.Control`) — Zero-API-key native Windows playback tracking
 
 ---
 
