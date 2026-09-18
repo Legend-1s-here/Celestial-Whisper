@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 # 🌸 Celestial Whisper
 ### 浮動歌詞オーバーレイ • Floating Spotify Lyrics Overlay for Windows
@@ -53,6 +53,10 @@
   - Font size slider from **`16 pt` to `44 pt`**.
   - Color presets including **Sakura Pink (`#FFB7C5`)**, **Crisp White**, **Spotify Green**, **Neon Cyan**, and **Sunset Gold**.
 
+- 🌊 **Smooth Floating Upward Motion (Float vs Pop)**
+  - Upcoming lines smoothly float and glide upwards into place as the song progresses with fluid cubic easing, making lyrics effortless to read without jarring jumps.
+  - Option to toggle between **Smooth Float Up** (gliding animation) and **Instant Pop** (direct switch) in Settings and System Tray!
+
 - 🚀 **Native App Launcher (No Terminal Window!)**
   - Desktop shortcut and Start Menu shortcut included.
   - Runs silently via `pythonw.exe` without opening a command prompt console.
@@ -103,6 +107,7 @@ Once running, play any song on Spotify and watch the lyrics float on your screen
 | **Open Settings** | Double-click the lyrics (or right-click $\rightarrow$ *Settings*) |
 | **Quick Position Switch** | Right-click the lyrics $\rightarrow$ *Position* (*Top* or *Bottom Center*) |
 | **Switch Language Mode** | Right-click the **♫** tray icon $\rightarrow$ *Language* (*English Translation*, *Hinglish*, *Original*) |
+| **Switch Transition Style** | Right-click overlay or tray $\rightarrow$ *Transition Effect* (*Float Up* or *Instant Pop*) |
 | **Change Lyrics Mode** | Right-click the **♫** tray icon $\rightarrow$ *Lyrics Display* (*Next Lyric Only*, *Both*, *Current Only*) |
 | **Toggle Show / Hide** | Left-click the **♫** tray icon in your Windows Taskbar |
 | **Exit** | Right-click the tray icon or overlay $\rightarrow$ *Exit* |

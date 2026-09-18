@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 from pathlib import Path
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -19,7 +19,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.config = dict(config)
         self.setWindowTitle("🌸 Celestial Whisper — 設定 (Settings)")
-        self.setFixedSize(600, 780)
+        self.setFixedSize(600, 840)
 
         self.bg_pixmap = None
         if BG_IMAGE_PATH.exists():
@@ -285,6 +285,34 @@ class SettingsDialog(QDialog):
         ctx_layout.addWidget(self.radio_none)
         main_layout.addWidget(ctx_box)
 
+        # 4. Lyric Transition Style Card (Float vs Pop)
+        trans_box = QFrame()
+        trans_box.setStyleSheet("""
+            QFrame {
+                background-color: rgba(26, 28, 44, 0.88);
+                border: 1px solid rgba(255, 183, 197, 0.28);
+                border-radius: 8px;
+            }
+        """)
+        trans_layout = QVBoxLayout(trans_box)
+        trans_layout.setContentsMargins(14, 8, 14, 8)
+        trans_layout.setSpacing(4)
+
+        lbl_trans_title = QLabel("🌸 Lyric Transition Animation (Float vs Pop)")
+        lbl_trans_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
+        trans_layout.addWidget(lbl_trans_title)
+
+        self.radio_trans_float = QRadioButton("Smooth Float Up (Lyrics glide && float upwards smoothly — easy to read)")
+        self.radio_trans_instant = QRadioButton("Instant Pop (Classic abrupt text switch without motion)")
+
+        self.trans_group = QButtonGroup(self)
+        self.trans_group.addButton(self.radio_trans_float)
+        self.trans_group.addButton(self.radio_trans_instant)
+
+        trans_layout.addWidget(self.radio_trans_float)
+        trans_layout.addWidget(self.radio_trans_instant)
+        main_layout.addWidget(trans_box)
+
         # 4. Width & Font Size Sliders Card
         size_box = QFrame()
         size_box.setStyleSheet("""
@@ -452,6 +480,12 @@ class SettingsDialog(QDialog):
         else:
             self.radio_both.setChecked(True)
 
+        trans_mode = self.config.get("transition_mode", "float")
+        if trans_mode == "instant":
+            self.radio_trans_instant.setChecked(True)
+        else:
+            self.radio_trans_float.setChecked(True)
+
         width = self.config.get("window_width", 1400)
         self.slider_width.setValue(width)
         self.lbl_width_val.setText(f"Overlay Width: {width} px")
@@ -482,6 +516,8 @@ class SettingsDialog(QDialog):
             self.config["context_mode"] = "none"
         else:
             self.config["context_mode"] = "both"
+
+        self.config["transition_mode"] = "instant" if self.radio_trans_instant.isChecked() else "float"
 
         self.config["window_width"] = self.slider_width.value()
         self.config["font_size"] = self.slider_size.value()

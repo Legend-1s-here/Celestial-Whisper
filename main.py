@@ -76,6 +76,7 @@ class ApplicationController:
         self.tray.position_changed.connect(self._set_position)
         self.tray.context_mode_changed.connect(self._set_context_mode)
         self.tray.language_mode_changed.connect(self._set_language_mode)
+        self.tray.transition_mode_changed.connect(self._set_transition_mode)
         self.tray.test_lyrics.connect(self.start_preview_mode)
         self.tray.action_exit.triggered.connect(self.close_app)
         self.tray.show()
@@ -83,6 +84,7 @@ class ApplicationController:
         # Overlay signals
         self.overlay.open_settings_requested.connect(self.show_settings)
         self.overlay.position_mode_changed.connect(self._on_overlay_position_changed)
+        self.overlay.transition_mode_changed.connect(self._set_transition_mode)
 
     def _toggle_overlay(self):
         if self.overlay.isVisible():
@@ -104,6 +106,11 @@ class ApplicationController:
         self.config["language_mode"] = mode
         save_config(self.config)
         self.lyrics_manager.set_language_mode(mode)
+
+    def _set_transition_mode(self, mode: str):
+        self.config["transition_mode"] = mode
+        save_config(self.config)
+        self.overlay.apply_config(self.config)
 
     def _on_overlay_position_changed(self, mode: str):
         self.config["position"] = mode

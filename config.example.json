@@ -1,9 +1,10 @@
-﻿{
+{
   "position": "bottom",
   "font_size": 24,
   "text_color": "#FFB7C5",
   "glow_color": "#000000",
   "context_mode": "next_only",
+  "transition_mode": "float",
   "language_mode": "romanized",
   "window_width": 1400,
   "window_height": 240,

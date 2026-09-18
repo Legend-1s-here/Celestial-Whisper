@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 from pathlib import Path
 
@@ -10,6 +10,7 @@ DEFAULT_CONFIG = {
     "text_color": "#FFB7C5",
     "glow_color": "#000000",
     "context_mode": "next_only",   # "both", "next_only", "none"
+    "transition_mode": "float",    # "float" (Smooth float up) or "instant" (Pop)
     "language_mode": "romanized",  # "romanized" (Hinglish/English letters), "translation", "original"
     "window_width": 1400,
     "window_height": 240,
@@ -33,6 +34,8 @@ def load_config() -> dict:
 
     if "context_mode" not in config:
         config["context_mode"] = "next_only"
+    if "transition_mode" not in config:
+        config["transition_mode"] = "float"
     if "language_mode" not in config:
         config["language_mode"] = "romanized"
 

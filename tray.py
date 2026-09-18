@@ -26,6 +26,7 @@ class SystemTray(QSystemTrayIcon):
     position_changed = pyqtSignal(str)
     context_mode_changed = pyqtSignal(str)
     language_mode_changed = pyqtSignal(str)
+    transition_mode_changed = pyqtSignal(str)
     test_lyrics = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -90,6 +91,13 @@ class SystemTray(QSystemTrayIcon):
         self.action_next_only.triggered.connect(lambda: self.context_mode_changed.emit("next_only"))
         self.action_both.triggered.connect(lambda: self.context_mode_changed.emit("both"))
         self.action_none.triggered.connect(lambda: self.context_mode_changed.emit("none"))
+
+        # Transition effect submenu (Float vs Pop)
+        trans_menu = menu.addMenu("✨ Transition Effect")
+        self.action_trans_float = trans_menu.addAction("🌸 Smooth Float Up")
+        self.action_trans_instant = trans_menu.addAction("⚡ Instant Pop")
+        self.action_trans_float.triggered.connect(lambda: self.transition_mode_changed.emit("float"))
+        self.action_trans_instant.triggered.connect(lambda: self.transition_mode_changed.emit("instant"))
 
         menu.addSeparator()
 
