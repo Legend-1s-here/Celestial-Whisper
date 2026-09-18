@@ -223,7 +223,7 @@ class SettingsDialog(QDialog):
         pos_layout.addWidget(self.radio_bottom)
         main_layout.addWidget(pos_box)
 
-        # 2. NEW: Language & English Translation Mode Card!
+        # 2. English / Language Mode Card (User specified: English letters / Hinglish!)
         lang_box = QFrame()
         lang_box.setStyleSheet("""
             QFrame {
@@ -236,21 +236,21 @@ class SettingsDialog(QDialog):
         lang_layout.setContentsMargins(14, 8, 14, 8)
         lang_layout.setSpacing(4)
 
-        lbl_lang_title = QLabel("🌐 English Lyrics Option (Translation & Transliteration)")
+        lbl_lang_title = QLabel("🌐 Lyrics Script / Language")
         lbl_lang_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
         lang_layout.addWidget(lbl_lang_title)
 
-        self.radio_lang_english = QRadioButton("English Translation (Translates Hindi, Japanese, etc. to English)")
-        self.radio_lang_romanized = QRadioButton("English Romanized (Hinglish / Latin alphabet for Hindi songs)")
-        self.radio_lang_original = QRadioButton("Original Language (Native script: Hindi, Japanese, etc.)")
+        self.radio_lang_romanized = QRadioButton("English Letters / Hinglish (e.g. \"Yaad aati nahi\", Romaji)")
+        self.radio_lang_translation = QRadioButton("English Meaning (Translate foreign words to English)")
+        self.radio_lang_original = QRadioButton("Original Native Script (Devanagari, Kanji, etc.)")
 
         self.lang_group = QButtonGroup(self)
-        self.lang_group.addButton(self.radio_lang_english)
         self.lang_group.addButton(self.radio_lang_romanized)
+        self.lang_group.addButton(self.radio_lang_translation)
         self.lang_group.addButton(self.radio_lang_original)
 
-        lang_layout.addWidget(self.radio_lang_english)
         lang_layout.addWidget(self.radio_lang_romanized)
+        lang_layout.addWidget(self.radio_lang_translation)
         lang_layout.addWidget(self.radio_lang_original)
         main_layout.addWidget(lang_box)
 
@@ -436,13 +436,13 @@ class SettingsDialog(QDialog):
         else:
             self.radio_bottom.setChecked(True)
 
-        lang_mode = self.config.get("language_mode", "english")
-        if lang_mode == "english":
-            self.radio_lang_english.setChecked(True)
-        elif lang_mode == "romanized":
-            self.radio_lang_romanized.setChecked(True)
-        else:
+        lang_mode = self.config.get("language_mode", "romanized")
+        if lang_mode == "translation":
+            self.radio_lang_translation.setChecked(True)
+        elif lang_mode == "original":
             self.radio_lang_original.setChecked(True)
+        else:
+            self.radio_lang_romanized.setChecked(True)
 
         ctx_mode = self.config.get("context_mode", "next_only")
         if ctx_mode == "next_only":
@@ -469,12 +469,12 @@ class SettingsDialog(QDialog):
     def _gather_into_config(self):
         self.config["position"] = "top" if self.radio_top.isChecked() else "bottom"
 
-        if self.radio_lang_english.isChecked():
-            self.config["language_mode"] = "english"
-        elif self.radio_lang_romanized.isChecked():
-            self.config["language_mode"] = "romanized"
-        else:
+        if self.radio_lang_translation.isChecked():
+            self.config["language_mode"] = "translation"
+        elif self.radio_lang_original.isChecked():
             self.config["language_mode"] = "original"
+        else:
+            self.config["language_mode"] = "romanized"
 
         if self.radio_next_only.isChecked():
             self.config["context_mode"] = "next_only"

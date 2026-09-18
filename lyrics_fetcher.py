@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import re
 import os
 import json
@@ -39,17 +39,16 @@ class LyricLine:
     def __repr__(self):
         return f"[{self.time_sec:.2f}s] {self.text}"
 
-def to_hinglish(text: str) -> str:
-    """Converts Devanagari Hindi text to clean readable Hinglish/Romanized English alphabet."""
+def fallback_to_hinglish(text: str) -> str:
+    """Rule-based fallback from Devanagari Hindi to Hinglish."""
     if not HAS_INDIC:
         return text
-    # Check if text contains Devanagari characters (0900-097F)
     if not any(0x0900 <= ord(c) <= 0x097F for c in text):
         return text
     try:
         res = transliterate(text, sanscript.DEVANAGARI, sanscript.IAST)
         replacements = {
-            'ā': 'a', 'ī': 'i', 'ū': 'u', 'ṛ': 'ri', 'ṝ': 'ri',
+            'ā': 'aa', 'ī': 'ee', 'ū': 'oo', 'ṛ': 'ri', 'ṝ': 'ri',
             'ṃ': 'n', 'ḥ': 'h', 'ṅ': 'n', 'ñ': 'n', 'ṇ': 'n',
             'ṭ': 't', 'ḍ': 'd', 'ṣ': 'sh', 'ś': 'sh', 'ḷ': 'l'
         }
@@ -60,8 +59,47 @@ def to_hinglish(text: str) -> str:
     except Exception:
         return text
 
+def romanize_lyrics(lines: List[str]) -> List[str]:
+    """
+    Converts Hindi Devanagari / foreign text into clean English alphabet (e.g. 'Yaad aati nahi').
+    Uses Google's dt=rm romanizer with local fallback.
+    """
+    if not lines:
+        return []
+    non_ascii = sum(1 for line in lines for c in line if ord(c) > 127)
+    if non_ascii == 0:
+        return lines
+
+    non_empty = [(i, l) for i, l in enumerate(lines) if l.strip()]
+    if not non_empty:
+        return lines
+
+    indices, texts = zip(*non_empty)
+    combined = "\n".join(texts)
+    url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=rm&q=" + urllib.parse.quote(combined)
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            rom_text = ""
+            for item in data[0]:
+                if len(item) > 3 and item[3]:
+                    rom_text = item[3]
+                    break
+            if rom_text:
+                rom_lines = rom_text.splitlines()
+                result = list(lines)
+                for idx, r in zip(indices, rom_lines):
+                    result[idx] = r.strip()
+                return result
+    except Exception as e:
+        safe_log(f"[LyricsFetcher] Romanization error: {e}, falling back to local Hinglish rules")
+
+    # Local fallback
+    return [fallback_to_hinglish(l) for l in lines]
+
 def translate_lines_to_english(lines: List[str]) -> List[str]:
-    """Translates non-English lyrics to English using free Google translate endpoint with robust line mapping."""
+    """Translates lyrics to English meaning."""
     if not lines:
         return []
     non_ascii = sum(1 for line in lines for c in line if ord(c) > 127)
@@ -91,16 +129,16 @@ def translate_lines_to_english(lines: List[str]) -> List[str]:
         return lines
 
 class LyricsManager:
-    def __init__(self, language_mode: str = "english"):
+    def __init__(self, language_mode: str = "romanized"):
         self.current_lyrics: List[LyricLine] = []
         self.original_lyrics: List[LyricLine] = []
-        self.translated_lyrics: List[LyricLine] = []
         self.romanized_lyrics: List[LyricLine] = []
+        self.translated_lyrics: List[LyricLine] = []
         
         self.current_song_key: str = ""
         self.is_synced: bool = False
         self.raw_text: str = ""
-        self.language_mode = language_mode  # "english", "romanized", "original"
+        self.language_mode = language_mode  # "romanized" (default Hinglish), "translation", "original"
 
     def clean_search_term(self, text: str) -> str:
         text = re.sub(r"\(feat\.[^\)]*\)", "", text, flags=re.IGNORECASE)
@@ -140,10 +178,10 @@ class LyricsManager:
         if not self.original_lyrics:
             return
 
-        if self.language_mode == "english" and self.translated_lyrics:
-            self.current_lyrics = self.translated_lyrics
-        elif self.language_mode == "romanized" and self.romanized_lyrics:
+        if self.language_mode == "romanized" and self.romanized_lyrics:
             self.current_lyrics = self.romanized_lyrics
+        elif self.language_mode == "translation" and self.translated_lyrics:
+            self.current_lyrics = self.translated_lyrics
         else:
             self.current_lyrics = self.original_lyrics
 
@@ -162,8 +200,8 @@ class LyricsManager:
         self.current_song_key = song_key
         self.current_lyrics = []
         self.original_lyrics = []
-        self.translated_lyrics = []
         self.romanized_lyrics = []
+        self.translated_lyrics = []
         self.is_synced = False
         self.raw_text = ""
 
@@ -178,13 +216,11 @@ class LyricsManager:
                     if self.is_synced and self.raw_text:
                         self.original_lyrics = self.parse_lrc(self.raw_text)
                         
-                        # Load cached translation/romanized if present
-                        if "translated_lrc" in data:
-                            self.translated_lyrics = self.parse_lrc(data["translated_lrc"])
                         if "romanized_lrc" in data:
                             self.romanized_lyrics = self.parse_lrc(data["romanized_lrc"])
+                        if "translated_lrc" in data:
+                            self.translated_lyrics = self.parse_lrc(data["translated_lrc"])
 
-                        # If language versions missing, generate them
                         self._process_language_variants(cache_file, data)
                         self._apply_current_language()
                         safe_log(f"[LyricsFetcher] Loaded from cache: {title} ({self.language_mode})")
@@ -229,30 +265,34 @@ class LyricsManager:
             return
 
         has_foreign = any(ord(c) > 127 for line in self.original_lyrics for c in line.text)
-        has_devanagari = any(0x0900 <= ord(c) <= 0x097F for line in self.original_lyrics for c in line.text)
+        if not has_foreign:
+            return
 
-        # 1. Generate Romanized Hinglish if Devanagari present
-        if has_devanagari and not self.romanized_lyrics:
-            self.romanized_lyrics = [
-                LyricLine(line.time_sec, to_hinglish(line.text))
-                for line in self.original_lyrics
-            ]
-            rom_lrc = "\n".join([f"[{int(l.time_sec//60):02d}:{l.time_sec%60:05.2f}] {l.text}" for l in self.romanized_lyrics])
-            cache_data["romanized_lrc"] = rom_lrc
-
-        # 2. Generate English translation if foreign
-        if has_foreign and not self.translated_lyrics:
+        # 1. Generate Romanized English letters (Hinglish: 'Yaad aati nahi')
+        if not self.romanized_lyrics:
             texts = [l.text for l in self.original_lyrics]
-            translated_texts = translate_lines_to_english(texts)
-            if translated_texts and len(translated_texts) == len(self.original_lyrics):
+            rom_texts = romanize_lyrics(texts)
+            if rom_texts and len(rom_texts) == len(self.original_lyrics):
+                self.romanized_lyrics = [
+                    LyricLine(self.original_lyrics[i].time_sec, rom_texts[i])
+                    for i in range(len(self.original_lyrics))
+                ]
+                rom_lrc = "\n".join([f"[{int(l.time_sec//60):02d}:{l.time_sec%60:05.2f}] {l.text}" for l in self.romanized_lyrics])
+                cache_data["romanized_lrc"] = rom_lrc
+
+        # 2. Generate English translation meaning
+        if not self.translated_lyrics:
+            texts = [l.text for l in self.original_lyrics]
+            trans_texts = translate_lines_to_english(texts)
+            if trans_texts and len(trans_texts) == len(self.original_lyrics):
                 self.translated_lyrics = [
-                    LyricLine(self.original_lyrics[i].time_sec, translated_texts[i])
+                    LyricLine(self.original_lyrics[i].time_sec, trans_texts[i])
                     for i in range(len(self.original_lyrics))
                 ]
                 trans_lrc = "\n".join([f"[{int(l.time_sec//60):02d}:{l.time_sec%60:05.2f}] {l.text}" for l in self.translated_lyrics])
                 cache_data["translated_lrc"] = trans_lrc
 
-        # Save to cache file
+        # Save to cache
         try:
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)

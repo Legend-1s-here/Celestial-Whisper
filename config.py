@@ -9,8 +9,8 @@ DEFAULT_CONFIG = {
     "font_size": 24,
     "text_color": "#FFB7C5",
     "glow_color": "#000000",
-    "context_mode": "next_only",  # "both", "next_only", "none"
-    "language_mode": "english",    # "english", "romanized", "original"
+    "context_mode": "next_only",   # "both", "next_only", "none"
+    "language_mode": "romanized",  # "romanized" (Hinglish/English letters), "translation", "original"
     "window_width": 1400,
     "window_height": 240,
     "lock_position": False
@@ -34,7 +34,7 @@ def load_config() -> dict:
     if "context_mode" not in config:
         config["context_mode"] = "next_only"
     if "language_mode" not in config:
-        config["language_mode"] = "english"
+        config["language_mode"] = "romanized"
 
     return config
 

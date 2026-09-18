@@ -73,13 +73,13 @@ class SystemTray(QSystemTrayIcon):
         self.action_top.triggered.connect(lambda: self.position_changed.emit("top"))
         self.action_bottom.triggered.connect(lambda: self.position_changed.emit("bottom"))
 
-        # Language submenu
-        lang_menu = menu.addMenu("🌐 Language")
-        self.action_lang_en = lang_menu.addAction("English Translation")
-        self.action_lang_rom = lang_menu.addAction("English Romanized (Hinglish)")
-        self.action_lang_orig = lang_menu.addAction("Original Language")
-        self.action_lang_en.triggered.connect(lambda: self.language_mode_changed.emit("english"))
+        # Language submenu (English letters vs Meaning vs Original)
+        lang_menu = menu.addMenu("🌐 Lyrics Script")
+        self.action_lang_rom = lang_menu.addAction("English Letters / Hinglish (e.g. Yaad aati nahi)")
+        self.action_lang_trans = lang_menu.addAction("English Meaning (Translation)")
+        self.action_lang_orig = lang_menu.addAction("Original Native Script")
         self.action_lang_rom.triggered.connect(lambda: self.language_mode_changed.emit("romanized"))
+        self.action_lang_trans.triggered.connect(lambda: self.language_mode_changed.emit("translation"))
         self.action_lang_orig.triggered.connect(lambda: self.language_mode_changed.emit("original"))
 
         # Lyrics Display mode submenu

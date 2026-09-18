@@ -4,6 +4,7 @@
   "text_color": "#FFB7C5",
   "glow_color": "#000000",
   "context_mode": "next_only",
+  "language_mode": "romanized",
   "window_width": 1400,
   "window_height": 240,
   "lock_position": false
