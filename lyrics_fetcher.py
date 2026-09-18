@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import re
 import os
 import json
@@ -299,9 +299,9 @@ class LyricsManager:
         except Exception:
             pass
 
-    def get_lines_at(self, current_sec: float) -> Tuple[str, str, str, int]:
+    def get_lines_at(self, current_sec: float) -> Tuple[str, str, str, str, int]:
         if not self.current_lyrics:
-            return ("", "", "", -1)
+            return ("", "", "", "", -1)
 
         active_idx = -1
         for i, line in enumerate(self.current_lyrics):
@@ -312,10 +312,12 @@ class LyricsManager:
 
         if active_idx == -1:
             first_text = self.current_lyrics[0].text if self.current_lyrics else ""
-            return ("", "♪ ... ♪", first_text, -1)
+            second_text = self.current_lyrics[1].text if len(self.current_lyrics) > 1 else ""
+            return ("", "♪ ... ♪", first_text, second_text, -1)
 
         curr_text = self.current_lyrics[active_idx].text or "♪"
         prev_text = self.current_lyrics[active_idx - 1].text if active_idx > 0 else ""
         next_text = self.current_lyrics[active_idx + 1].text if (active_idx + 1 < len(self.current_lyrics)) else ""
+        in_text = self.current_lyrics[active_idx + 2].text if (active_idx + 2 < len(self.current_lyrics)) else ""
 
-        return (prev_text, curr_text, next_text, active_idx)
+        return (prev_text, curr_text, next_text, in_text, active_idx)
