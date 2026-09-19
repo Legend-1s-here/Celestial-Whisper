@@ -313,6 +313,34 @@ class SettingsDialog(QDialog):
         trans_layout.addWidget(self.radio_trans_instant)
         main_layout.addWidget(trans_box)
 
+        # 4. Gaming & Fullscreen Card
+        game_box = QFrame()
+        game_box.setStyleSheet("""
+            QFrame {
+                background-color: rgba(26, 28, 44, 0.88);
+                border: 1px solid rgba(255, 183, 197, 0.28);
+                border-radius: 8px;
+            }
+        """)
+        game_layout = QVBoxLayout(game_box)
+        game_layout.setContentsMargins(14, 8, 14, 8)
+        game_layout.setSpacing(4)
+
+        lbl_game_title = QLabel("🎮 Gaming & Fullscreen Mode")
+        lbl_game_title.setStyleSheet("font-weight: bold; color: #FFB7C5; font-size: 10pt;")
+        game_layout.addWidget(lbl_game_title)
+
+        self.chk_click_through = QCheckBox("Game Mode: Pass mouse clicks through overlay to game (Click-Through)")
+        self.chk_click_through.setStyleSheet("color: #FFFFFF; font-size: 9pt;")
+        game_layout.addWidget(self.chk_click_through)
+
+        lbl_game_tip = QLabel("💡 Tip: For games to show desktop overlays, set your game video mode to 'Borderless Windowed' or 'Windowed Fullscreen'.")
+        lbl_game_tip.setStyleSheet("color: #9EA2B8; font-size: 8pt; font-style: italic;")
+        lbl_game_tip.setWordWrap(True)
+        game_layout.addWidget(lbl_game_tip)
+
+        main_layout.addWidget(game_box)
+
         # 4. Width & Font Size Sliders Card
         size_box = QFrame()
         size_box.setStyleSheet("""
@@ -495,6 +523,7 @@ class SettingsDialog(QDialog):
         self.lbl_size_val.setText(f"Font Size: {size} pt")
 
         self.chk_lock.setChecked(self.config.get("lock_position", False))
+        self.chk_click_through.setChecked(self.config.get("click_through", False))
 
     def _on_test_clicked(self):
         self._gather_into_config()
@@ -523,6 +552,7 @@ class SettingsDialog(QDialog):
         self.config["font_size"] = self.slider_size.value()
         self.config["text_color"] = self.current_color
         self.config["lock_position"] = self.chk_lock.isChecked()
+        self.config["click_through"] = self.chk_click_through.isChecked()
 
     def _save_and_close(self):
         self._gather_into_config()

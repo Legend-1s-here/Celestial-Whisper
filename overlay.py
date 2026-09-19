@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QTimer
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
     QMenu, QApplication
@@ -18,9 +18,16 @@ class FloatingLyricsOverlay(QWidget):
         self.drag_position = QPoint()
         self.is_dragging = False
         self._current_text = ""
+        self.click_through = self.config.get("click_through", False)
 
         self._init_ui()
         self.apply_config()
+
+        # Periodic keep-alive timer to ensure lyrics stay permanently on top of fullscreen/borderless games
+        self.topmost_timer = QTimer(self)
+        self.topmost_timer.setInterval(800)
+        self.topmost_timer.timeout.connect(self._keep_topmost)
+        self.topmost_timer.start()
 
     def _init_ui(self):
         self.setWindowFlags(
@@ -62,7 +69,56 @@ class FloatingLyricsOverlay(QWidget):
             next_line="Play any song on Spotify • Double-click for settings",
         )
 
+    def apply_win32_styles(self):
+        if sys.platform != "win32":
+            return
+        try:
+            import ctypes
+            hwnd = int(self.winId())
+            user32 = ctypes.windll.user32
+            GWL_EXSTYLE = -20
+            WS_EX_TOPMOST     = 0x00000008
+            WS_EX_TOOLWINDOW  = 0x00000080
+            WS_EX_NOACTIVATE  = 0x08000000
+            WS_EX_LAYERED     = 0x00080000
+            WS_EX_TRANSPARENT = 0x00000020
+
+            style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            style |= (WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED)
+            if self.click_through:
+                style |= WS_EX_TRANSPARENT
+            else:
+                style &= ~WS_EX_TRANSPARENT
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        except Exception:
+            pass
+
+    def _keep_topmost(self):
+        if not self.isVisible():
+            return
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                hwnd = int(self.winId())
+                HWND_TOPMOST  = ctypes.c_void_p(-1)
+                SWP_NOMOVE    = 0x0002
+                SWP_NOSIZE    = 0x0001
+                SWP_NOACTIVATE = 0x0010
+                ctypes.windll.user32.SetWindowPos(
+                    ctypes.c_void_p(hwnd), HWND_TOPMOST, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+                )
+            except Exception:
+                pass
+
+    def set_click_through(self, enabled: bool):
+        self.click_through = enabled
+        self.config["click_through"] = enabled
+        self.apply_win32_styles()
+        self.force_topmost()
+
     def force_topmost(self):
+        self.apply_win32_styles()
         try:
             import ctypes
             hwnd = int(self.winId())
@@ -82,11 +138,15 @@ class FloatingLyricsOverlay(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
+        self.apply_win32_styles()
         self.force_topmost()
 
     def apply_config(self, config: dict = None):
         if config:
             self.config = config
+
+        self.click_through = self.config.get("click_through", False)
+        self.apply_win32_styles()
 
         font_size    = self.config.get("font_size", 24)
         text_color   = self.config.get("text_color", "#FFB7C5")
@@ -164,6 +224,7 @@ class FloatingLyricsOverlay(QWidget):
         self.lbl_prev.setText(prev_line)
         self.lbl_curr.setText(curr_line)
         self.lbl_next.setText(next_line)
+        self._keep_topmost()
 
     def showStatus(self, message: str, subtitle: str = ""):
         self.setLyrics("", message, subtitle)

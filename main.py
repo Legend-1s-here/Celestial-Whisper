@@ -104,6 +104,8 @@ class ApplicationController:
         self.tray.context_mode_changed.connect(self._set_context_mode)
         self.tray.language_mode_changed.connect(self._set_language_mode)
         self.tray.transition_mode_changed.connect(self._set_transition_mode)
+        self.tray.click_through_toggled.connect(self._set_click_through)
+        self.tray.set_click_through_checked(self.config.get("click_through", False))
         self.tray.test_lyrics.connect(self.start_preview_mode)
         self.tray.action_exit.triggered.connect(self.close_app)
         self.tray.show()
@@ -173,6 +175,14 @@ class ApplicationController:
         save_config(self.config)
         self.overlay.apply_config(self.config)
 
+    def _set_click_through(self, enabled: bool):
+        self.config["click_through"] = enabled
+        save_config(self.config)
+        self.overlay.set_click_through(enabled)
+        self.tray.set_click_through_checked(enabled)
+        msg = "🎮 Game Mode ON: Clicks pass straight through into your game! (Toggle off anytime via ♫ Taskbar icon)" if enabled else "🎮 Game Mode OFF: Overlay can now be dragged or double-clicked."
+        self.tray.showMessage("🌸 Celestial Whisper", msg, QSystemTrayIcon.MessageIcon.Information, 3500)
+
     def _on_overlay_position_changed(self, mode: str):
         self.config["position"] = mode
         save_config(self.config)
@@ -192,6 +202,7 @@ class ApplicationController:
         self.config = new_config
         save_config(self.config)
         self.overlay.apply_config(self.config)
+        self.tray.set_click_through_checked(self.config.get("click_through", False))
         self.lyrics_manager.set_language_mode(self.config.get("language_mode", "romanized"))
 
     def start_preview_mode(self):

@@ -14,7 +14,8 @@ DEFAULT_CONFIG = {
     "language_mode": "romanized",  # "romanized" (Hinglish/English letters), "translation", "original"
     "window_width": 1400,
     "window_height": 240,
-    "lock_position": False
+    "lock_position": False,
+    "click_through": False
 }
 
 def load_config() -> dict:

@@ -57,6 +57,12 @@
   - Upcoming lines smoothly float and glide upwards into place as the song progresses with fluid cubic easing, making lyrics effortless to read without jarring jumps.
   - Option to toggle between **Smooth Float Up** (gliding animation) and **Instant Pop** (direct switch) in Settings and System Tray!
 
+- 🎮 **Gaming Mode & Fullscreen Game Support**
+  - **Always on Top of Games**: High-frequency Win32 topmost keep-alive maintains the overlay in the foreground, even when games take focus or resolution changes.
+  - **Click-Through (Mouse Passthrough)**: Toggle Game Mode on to let 100% of mouse clicks pass straight through into your game without interruption! You can play, aim, and shoot while reading lyrics.
+  - Easily toggle Game Mode on/off anytime from the **♫ System Tray** icon or Settings.
+  - *(Note: Ensure your game's display setting is set to **Borderless Windowed** / **Windowed Fullscreen** so Windows Desktop Window Manager can render overlays).*
+
 - 🚀 **Native App Launcher (No Terminal Window!)**
   - Desktop shortcut and Start Menu shortcut included.
   - Runs silently via `pythonw.exe` without opening a command prompt console.
@@ -109,6 +115,7 @@ Once running, play any song on Spotify and watch the lyrics float on your screen
 | **Switch Language Mode** | Right-click the **♫** tray icon $\rightarrow$ *Language* (*English Translation*, *Hinglish*, *Original*) |
 | **Switch Transition Style** | Right-click overlay or tray $\rightarrow$ *Transition Effect* (*Float Up* or *Instant Pop*) |
 | **Change Lyrics Mode** | Right-click the **♫** tray icon $\rightarrow$ *Lyrics Display* (*Next Lyric Only*, *Both*, *Current Only*) |
+| **Toggle Game Mode** | Right-click the **♫** tray icon $\rightarrow$ *🎮 Game Mode (Click-Through Overlay)* |
 | **Toggle Show / Hide** | Left-click the **♫** tray icon in your Windows Taskbar |
 | **Exit** | Right-click the tray icon or overlay $\rightarrow$ *Exit* |
 

@@ -1,4 +1,4 @@
-﻿from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
+from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QFont
 from PyQt6.QtCore import pyqtSignal, Qt
 
@@ -27,6 +27,7 @@ class SystemTray(QSystemTrayIcon):
     context_mode_changed = pyqtSignal(str)
     language_mode_changed = pyqtSignal(str)
     transition_mode_changed = pyqtSignal(str)
+    click_through_toggled = pyqtSignal(bool)
     test_lyrics = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -99,6 +100,11 @@ class SystemTray(QSystemTrayIcon):
         self.action_trans_float.triggered.connect(lambda: self.transition_mode_changed.emit("float"))
         self.action_trans_instant.triggered.connect(lambda: self.transition_mode_changed.emit("instant"))
 
+        # Game Mode (Click-Through Overlay) toggle
+        self.action_click_through = menu.addAction("🎮 Game Mode (Click-Through Overlay)")
+        self.action_click_through.setCheckable(True)
+        self.action_click_through.triggered.connect(self.click_through_toggled.emit)
+
         menu.addSeparator()
 
         self.action_test = menu.addAction("▶ Preview Sample Lyrics")
@@ -111,6 +117,9 @@ class SystemTray(QSystemTrayIcon):
         self.action_exit = menu.addAction("❌ Exit")
 
         self.setContextMenu(menu)
+
+    def set_click_through_checked(self, checked: bool):
+        self.action_click_through.setChecked(checked)
 
     def _on_activated(self, reason):
         if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
