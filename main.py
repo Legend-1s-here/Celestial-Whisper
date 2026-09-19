@@ -46,19 +46,30 @@ class ApplicationController:
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
 
-        # Single-instance enforcement: wake up existing instance if already running
-        self.server_name = "CelestialWhisperSingleInstance"
-        check_sock = QLocalSocket()
-        check_sock.connectToServer(self.server_name)
-        if check_sock.waitForConnected(400):
-            check_sock.write(b"WAKEUP\n")
-            check_sock.waitForBytesWritten(500)
-            check_sock.disconnectFromServer()
-            sys.exit(0)
+        # Single-instance enforcement using Windows named mutex
+        # (auto-releases when process dies, unlike QLocalSocket which can leave stale locks)
+        self._mutex = None
+        if os.name == "nt":
+            try:
+                import ctypes
+                import ctypes.wintypes
+                ERROR_ALREADY_EXISTS = 183
+                self._mutex = ctypes.windll.kernel32.CreateMutexW(None, True, "CelestialWhisperMutex_v2")
+                if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+                    # Another live instance is running — bring it to front via local socket
+                    check_sock = QLocalSocket()
+                    check_sock.connectToServer("CelestialWhisperSingleInstance")
+                    if check_sock.waitForConnected(600):
+                        check_sock.write(b"WAKEUP\n")
+                        check_sock.waitForBytesWritten(500)
+                        check_sock.disconnectFromServer()
+                    sys.exit(0)
+            except Exception:
+                pass  # Continue if mutex creation fails
 
         self.server = QLocalServer(self.app)
-        self.server.removeServer(self.server_name)
-        self.server.listen(self.server_name)
+        self.server.removeServer("CelestialWhisperSingleInstance")
+        self.server.listen("CelestialWhisperSingleInstance")
         self.server.newConnection.connect(self._on_single_instance_client)
 
         if ICON_PATH.exists():
@@ -248,6 +259,13 @@ class ApplicationController:
 
     def close_app(self):
         self.spotify_worker.stop()
+        if self._mutex:
+            try:
+                import ctypes
+                ctypes.windll.kernel32.ReleaseMutex(self._mutex)
+                ctypes.windll.kernel32.CloseHandle(self._mutex)
+            except Exception:
+                pass
         self.app.quit()
 
     def run(self):
