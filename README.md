@@ -1,154 +1,226 @@
 <div align="center">
 
-# 🌸 Celestial Whisper
-### 浮動歌詞オーバーレイ • Floating Spotify Lyrics Overlay for Windows
+<img src="assets/celestial-whisper-banner.png" alt="Celestial Whisper — floating lyrics for Windows" width="100%" />
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![PyQt6](https://img.shields.io/badge/GUI-PyQt6-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://pypi.org/project/PyQt6/)
-[![Platform](https://img.shields.io/badge/Platform-Windows_10_|_11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
-[![Spotify](https://img.shields.io/badge/Spotify-Free_&_Premium-1ED760?style=for-the-badge&logo=spotify&logoColor=white)](https://spotify.com)
-[![License](https://img.shields.io/badge/License-MIT-F38BA8?style=for-the-badge)](LICENSE)
+# Celestial Whisper
 
-<p align="center">
-  <b>A lightweight, beautiful desktop overlay that displays real-time time-synchronized floating lyrics on top of all windows, games, and videos while listening to Spotify.</b>
+### A quiet lyric layer for loud worlds.
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyQt6](https://img.shields.io/badge/UI-PyQt6-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://pypi.org/project/PyQt6/)
+[![Windows](https://img.shields.io/badge/Platform-Windows_10_%2F_11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+[![Spotify](https://img.shields.io/badge/Playback-Spotify-1ED760?style=for-the-badge&logo=spotify&logoColor=white)](https://spotify.com/)
+[![License](https://img.shields.io/badge/License-MIT-F38BA8?style=for-the-badge)](./LICENSE)
+
+<p>
+  <strong>Read your music while you work, play, browse, or disappear into a film.</strong><br />
+  Celestial Whisper is a lightweight, synchronized Spotify lyrics overlay that stays beautiful, readable, and out of the way.
 </p>
 
 </div>
 
 ---
 
-## ✨ Features
+## The idea
 
-- 🌟 **100% Free — No Spotify Premium or Developer API Keys Needed**
-  - Uses Windows Native Media Transport to track Spotify playback directly from Windows.
-  - Works out of the box with **Spotify Free**, **Spotify Premium**, **Spotify Desktop App**, and **Spotify Web Player**.
-  - No `403 Forbidden` API limitations or login setup required!
+Music should not force you to choose between listening and looking.
 
-- 🌐 **English Lyrics Options (Translation & Transliteration)**
-  - **English Translation**: Translates Hindi, Japanese, Korean, Spanish, and foreign songs line-by-line into English meaning while preserving exact millisecond playback sync!
-  - **English Romanized (Hinglish / Latin Alphabet)**: Converts Devanagari Hindi into clean, readable English alphabet lyrics (e.g., *"Kesariya tera ishq hai piya"*).
-  - **Original Language**: Keep native scripts whenever preferred.
-  - Switch on the fly via Settings or System Tray!
+Celestial Whisper turns synchronized lyrics into a frameless, translucent layer that floats above your desktop. It follows Spotify playback through Windows' native media session, keeps timing close to the song, and lets you tune the experience to your screen, language, game, and mood.
 
-- 🌸 **Japanese Sakura Night Theme**
-  - Atmospheric dark-mode Settings UI featuring **Mount Fuji**, a traditional **Torii gate**, a **5-story Pagoda**, a glowing **crescent moon**, and blossoming **Sakura cherry branches**.
-  - Frosted glass translucent cards with Sakura pink accents.
+> **A small window into the song — never a window in the way.**
 
-- 🪟 **Floating Translucent Text (No Box)**
-  - Frameless and completely transparent — floats seamlessly above full-screen games, coding IDEs, browsers, or movies without an annoying opaque box.
-  - High-contrast glowing drop shadows ensure lyrics are crisp and readable over both dark and bright backgrounds.
+## See it in motion
 
-- 📍 **Dual Positioning & Free Drag-and-Drop**
-  - **Top of the Screen**: Positioned at the top edge (ideal for staying clear of game HUDs and bottom taskbars).
-  - **Bottom Center**: Classic cinema subtitle style.
-  - **Free Dragging**: Click and drag the floating text anywhere on your screen with your mouse!
+The overlay is designed to remain readable over a game, editor, browser, or video without trapping the lyric inside an opaque panel. In Game Mode, clicks pass through to the application underneath.
 
-- 📜 **Flexible Lyrics Display Modes**
-  - **Next Lyric Only (2 lines)**: Displays the bold active line and the upcoming line (no past lyrics).
-  - **Both Previous & Next (3 lines)**: Full 3-line cinema view.
-  - **Current Lyric Only (1 line)**: Ultra-minimalist single line.
+<div align="center">
 
-- 📏 **Customizable Width & Font Size**
-  - Adjustable overlay width slider from **`1000 px` to `1800 px`** to eliminate any line wrapping or edge clipping.
-  - Font size slider from **`16 pt` to `44 pt`**.
-  - Color presets including **Sakura Pink (`#FFB7C5`)**, **Crisp White**, **Spotify Green**, **Neon Cyan**, and **Sunset Gold**.
+<img src="assets/floating-lyrics-example.png" alt="Celestial Whisper displaying synchronized lyrics over a game" width="100%" />
 
-- 🌊 **Smooth Floating Upward Motion (Float vs Pop)**
-  - Upcoming lines smoothly float and glide upwards into place as the song progresses with fluid cubic easing, making lyrics effortless to read without jarring jumps.
-  - Option to toggle between **Smooth Float Up** (gliding animation) and **Instant Pop** (direct switch) in Settings and System Tray!
+<sub>Example: keeping the lyric visible while continuing to play.</sub>
 
-- 🎮 **Gaming Mode & Fullscreen Game Support**
-  - **Always on Top of Games**: High-frequency Win32 topmost keep-alive maintains the overlay in the foreground, even when games take focus or resolution changes.
-  - **Click-Through (Mouse Passthrough)**: Toggle Game Mode on to let 100% of mouse clicks pass straight through into your game without interruption! You can play, aim, and shoot while reading lyrics.
-  - Easily toggle Game Mode on/off anytime from the **♫ System Tray** icon or Settings.
-  - *(Note: Ensure your game's display setting is set to **Borderless Windowed** / **Windowed Fullscreen** so Windows Desktop Window Manager can render overlays).*
+</div>
 
-- 🚀 **Native App Launcher (No Terminal Window!)**
-  - Desktop shortcut and Start Menu shortcut included.
-  - Runs silently via `pythonw.exe` without opening a command prompt console.
+## What makes it different
 
----
+<table>
+<tr>
+<td width="50%" valign="top">
 
-## 📥 Installation
+### No Spotify API dance
 
-### Prerequisites
-- **Windows 10 (1809+) or Windows 11**
-- **Python 3.10 or higher** (Ensure *"Add Python to PATH"* is checked during installation)
+Celestial Whisper reads playback through the Windows media session instead of requiring a Spotify developer application, OAuth flow, or Premium-only API setup. It is intended to work with Spotify Desktop and the Web Player on Windows.
 
-### 1. Clone the Repository
+</td>
+<td width="50%" valign="top">
+
+### A truly floating overlay
+
+The lyric window is frameless, transparent, always-on-top, and rendered with high-contrast shadows. It can sit at the top of the display, rest in a cinema-style bottom position, or be dragged wherever it feels right.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Three ways to understand a lyric
+
+Keep the original script, switch to English meaning, or use English letters / Hinglish / Romaji for lyrics written in another script. The app caches fetched lyrics and language variants locally.
+
+</td>
+<td width="50%" valign="top">
+
+### Built for the middle of a song
+
+Use the tray icon for fast changes, preview sample lyrics before starting Spotify, toggle click-through gaming mode, or open the full Sakura-themed settings panel when you want finer control.
+
+</td>
+</tr>
+</table>
+
+## Feature map
+
+### Overlay
+
+- Frameless transparent lyric window with a subtle drop-shadow treatment.
+- Always-on-top behavior with a Windows keep-alive for borderless and fullscreen-style games.
+- Top-of-screen and bottom-center placement presets.
+- Free drag-and-drop positioning, with an optional position lock.
+- Three context modes: current + next, previous + current + next, or current only.
+- Adjustable overlay width from **1000–1800 px** and font size from **16–44 pt**.
+- Custom active-line color with White, Sakura, Spotify, Cyan, and Gold presets.
+
+### Language and lyrics
+
+- Synchronized `.lrc` lyric parsing for line-level timing.
+- Original native script mode for Devanagari, Japanese, Korean, and other scripts.
+- English meaning mode for translated lyrics.
+- English-letter mode for romanized lyrics, including Hinglish and Romaji-style output.
+- Local lyric caching to reduce repeated network requests.
+- Graceful fallback behavior when a translation or romanization request is unavailable.
+
+### Motion and gaming
+
+- Smooth Float Up transition for a gentle upward lyric glide.
+- Instant Pop transition for a direct, minimal change.
+- Game Mode with click-through support so the overlay does not steal mouse input.
+- Borderless Windowed / Windowed Fullscreen guidance for the most reliable game overlay behavior.
+- System tray controls for visibility, language, position, display mode, transition, preview, settings, and exit.
+
+## Settings, without the clutter
+
+The settings experience is organized into three focused tabs:
+
+| Tab | Controls |
+| --- | --- |
+| **Appearance** | Position, width, font size, active-line color, and position lock |
+| **Language & Script** | Romanized / Hinglish, English meaning, original script, and lyric context |
+| **Gaming & Effects** | Click-through Game Mode, Float Up / Instant Pop, and native media status |
+
+The interface uses a dark indigo palette, frosted cards, Sakura pink accents, and a Japanese night background so the controls feel like part of the same listening experience rather than a generic utility dialog.
+
+<div align="center">
+
+<img src="assets/settings-appearance.png" alt="Celestial Whisper Appearance settings with overlay position, width, font size, and color controls" width="88%" />
+
+<sub>The Appearance tab brings the most-used overlay controls into one focused panel.</sub>
+
+</div>
+
+## Installation
+
+### Requirements
+
+- Windows 10 (1809+) or Windows 11
+- Python **3.10 or newer**
+- Spotify Desktop or Spotify Web Player for playback detection
+
+### 1. Clone the project
+
 ```bash
 git clone https://github.com/Legend-1s-here/Celestial-Whisper.git
 cd Celestial-Whisper
 ```
 
-### 2. Install Dependencies
+### 2. Install dependencies
+
 ```bash
 py -m pip install -r requirements.txt
 ```
 
-### 3. Create Desktop & Start Menu Shortcut (Recommended)
-Run the included PowerShell script to place a **Celestial Whisper** shortcut directly on your Desktop and Start Menu:
+### 3. Launch
+
+For the regular launcher:
+
+```bash
+py main.py
+```
+
+For a silent Windows launch without a terminal window, use `Celestial Whisper.vbs` or `run.bat`. You can also create Desktop and Start Menu shortcuts with:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
 ```
 
----
+Play a song on Spotify and the overlay will begin listening for the active track. If you want to see the experience before opening Spotify, choose **Preview Sample Lyrics** from the system tray.
 
-## 🎮 How to Run
+## Controls at a glance
 
-1. **Desktop Shortcut**: Double-click the **Celestial Whisper** icon on your Desktop (no terminal window will open).
-2. **Start Menu**: Press the **Windows Key**, type `Celestial Whisper`, and press `Enter`.
-3. **Folder Launcher**: Double-click `Celestial Whisper.vbs` or `run.bat`.
-4. **Terminal**: Run `py main.py` or `pythonw main.py`.
+| Action | How |
+| --- | --- |
+| Move the overlay | Click and drag the lyric window |
+| Open settings | Double-click the overlay or choose **Settings** from the tray |
+| Change position | Overlay context menu or tray → **Position** |
+| Change script | Tray → **Lyrics Script** |
+| Change context | Tray → **Lyrics Display** |
+| Change motion | Tray → **Transition Effect** |
+| Enable Game Mode | Tray → **Game Mode (Click-Through Overlay)** |
+| Preview the experience | Tray → **Preview Sample Lyrics** |
+| Show / hide | Click the ♫ tray icon |
+| Exit | Tray or overlay context menu → **Exit** |
 
-Once running, play any song on Spotify and watch the lyrics float on your screen in real time!
+## Project anatomy
 
----
-
-## ⌨️ Controls & Shortcuts
-
-| Action | Control |
-|---|---|
-| **Move Overlay** | Click and drag the floating lyrics with your mouse |
-| **Open Settings** | Double-click the lyrics (or right-click $\rightarrow$ *Settings*) |
-| **Quick Position Switch** | Right-click the lyrics $\rightarrow$ *Position* (*Top* or *Bottom Center*) |
-| **Switch Language Mode** | Right-click the **♫** tray icon $\rightarrow$ *Language* (*English Translation*, *Hinglish*, *Original*) |
-| **Switch Transition Style** | Right-click overlay or tray $\rightarrow$ *Transition Effect* (*Float Up* or *Instant Pop*) |
-| **Change Lyrics Mode** | Right-click the **♫** tray icon $\rightarrow$ *Lyrics Display* (*Next Lyric Only*, *Both*, *Current Only*) |
-| **Toggle Game Mode** | Right-click the **♫** tray icon $\rightarrow$ *🎮 Game Mode (Click-Through Overlay)* |
-| **Toggle Show / Hide** | Left-click the **♫** tray icon in your Windows Taskbar |
-| **Exit** | Right-click the tray icon or overlay $\rightarrow$ *Exit* |
-
----
-
-## 📁 Project Structure
-
-```
+```text
 Celestial-Whisper/
-├── main.py                 # Application entry point & controller
-├── overlay.py              # Frameless, transparent floating lyrics window
-├── settings_ui.py          # Japanese Sakura themed Settings UI with English options
-├── spotify_client.py       # Windows Media worker (Spotify Free & Premium)
-├── media_monitor.ps1       # Real-time Windows Media Session stream
-├── lyrics_fetcher.py       # Synced .lrc lyrics parser with translation & caching
-├── tray.py                 # Windows Taskbar system tray menu
-├── config.py               # Settings manager (loads/saves config.json)
-├── config.example.json     # Configuration template
-├── create_shortcut.ps1     # 1-click Desktop & Start Menu shortcut creator
-├── Celestial Whisper.vbs   # Silent native app launcher
-├── run.bat                 # Standard batch launcher
-├── app.ico                 # Custom Sakura ♫ application icon
-├── japanese_bg.jpg         # Japanese theme background art
-├── requirements.txt        # Python package dependencies
-└── README.md               # Documentation
+├── main.py                    # Application controller and preview mode
+├── overlay.py                 # Transparent, draggable lyrics window
+├── settings_ui.py             # Sakura-themed tabbed settings dialog
+├── spotify_client.py          # Windows Media Session worker
+├── media_monitor.ps1          # Playback metadata stream
+├── lyrics_fetcher.py          # LRC parsing, caching, translation, romanization
+├── tray.py                    # Windows system tray menu and actions
+├── config.py                  # Persistent configuration management
+├── config.example.json        # Example configuration
+├── create_shortcut.ps1        # Desktop and Start Menu shortcut helper
+├── Celestial Whisper.vbs      # Silent Windows launcher
+├── run.bat                    # Batch launcher
+├── japanese_bg.jpg            # Settings background artwork
+├── app.ico                    # Application icon
+├── requirements.txt           # Python dependencies
+└── assets/
+    ├── celestial-whisper-banner.png
+    ├── floating-lyrics-example.png
+    └── settings-appearance.png
 ```
 
----
+## Design language
 
-## 📄 License
+Celestial Whisper is intentionally soft: midnight indigo, Sakura pink, glass-like panels, luminous text, and just enough motion to make timing feel alive. The visual direction takes cues from Japanese night scenes and music-player minimalism without turning the overlay into another dashboard competing for attention.
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+## Notes
+
+- This project is designed for **Windows** because playback detection and click-through behavior use Windows media and window APIs.
+- For the most reliable game behavior, use **Borderless Windowed** or **Windowed Fullscreen** rather than exclusive fullscreen.
+- Lyric availability and synchronization depend on the external lyric sources used by `syncedlyrics`.
+- Translation and romanization require network access when a requested variant is not already cached.
+
+## License
+
+Celestial Whisper is released under the [MIT License](./LICENSE).
 
 <div align="center">
-  <sub>Made with 🌸 for music lovers everywhere.</sub>
+
+**Made for the moments when the song is part of the scene.**
+
 </div>
