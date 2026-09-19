@@ -1,18 +1,52 @@
-﻿$WshShell = New-Object -ComObject WScript.Shell
+$WshShell = New-Object -ComObject WScript.Shell
 
 $workingDir = $PSScriptRoot
 if (-not $workingDir) {
     $workingDir = (Get-Location).Path
 }
 
-# Locate pythonw.exe
-$pythonw = Get-Command pythonw -ErrorAction SilentlyContinue
-if ($pythonw) {
-    $pythonwPath = $pythonw.Source
-} elseif (Test-Path "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\pythonw.exe") {
-    $pythonwPath = "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\pythonw.exe"
-} else {
-    $pythonwPath = "pyw.exe"
+# Locate real pythonw.exe (strictly excluding 0-byte WindowsApps alias stubs)
+$pythonwPath = $null
+
+try {
+    $detected = & py -c "import sys, os; p = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe'); print(p if os.path.exists(p) else '')" 2>$null
+    if ($detected -and (Test-Path $detected) -and (Get-Item $detected).Length -gt 0) {
+        $pythonwPath = $detected.Trim()
+    }
+} catch {}
+
+if (-not $pythonwPath) {
+    $candidates = @(
+        "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python314\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python313\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python312\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python311\pythonw.exe",
+        "$env:ProgramFiles\Python314\pythonw.exe",
+        "$env:ProgramFiles\Python313\pythonw.exe",
+        "$env:ProgramFiles\Python312\pythonw.exe",
+        "$env:ProgramFiles\Python311\pythonw.exe"
+    )
+    foreach ($c in $candidates) {
+        if ((Test-Path $c) -and (Get-Item $c).Length -gt 0) {
+            $pythonwPath = $c
+            break
+        }
+    }
+}
+
+if (-not $pythonwPath) {
+    $all = Get-Command pythonw -All -ErrorAction SilentlyContinue
+    foreach ($cmd in $all) {
+        if ($cmd.Source -notlike "*WindowsApps*" -and (Test-Path $cmd.Source) -and (Get-Item $cmd.Source).Length -gt 0) {
+            $pythonwPath = $cmd.Source
+            break
+        }
+    }
+}
+
+if (-not $pythonwPath) {
+    $pythonwPath = "pythonw.exe"
 }
 
 $scriptPath = Join-Path $workingDir "main.py"
@@ -45,3 +79,16 @@ if (Test-Path $iconPath) {
 $shortcutStart.Description = "Spotify Floating Lyrics Overlay"
 $shortcutStart.Save()
 Write-Host "Created Start Menu Shortcut: $destStart"
+
+# 3. Local Directory Shortcut
+$destLocal = Join-Path $workingDir "Celestial Whisper.lnk"
+$shortcutLocal = $WshShell.CreateShortcut($destLocal)
+$shortcutLocal.TargetPath = $pythonwPath
+$shortcutLocal.Arguments = "`"$scriptPath`""
+$shortcutLocal.WorkingDirectory = $workingDir
+if (Test-Path $iconPath) {
+    $shortcutLocal.IconLocation = "$iconPath,0"
+}
+$shortcutLocal.Description = "Spotify Floating Lyrics Overlay"
+$shortcutLocal.Save()
+Write-Host "Created Local Folder Shortcut: $destLocal"

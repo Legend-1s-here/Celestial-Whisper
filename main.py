@@ -123,19 +123,22 @@ class ApplicationController:
         self.overlay.transition_mode_changed.connect(self._set_transition_mode)
 
     def _on_single_instance_client(self):
-        client = self.server.nextPendingConnection()
-        if client:
-            client.readyRead.connect(self._on_client_wakeup)
+        self._client = self.server.nextPendingConnection()
+        self._on_client_wakeup()
 
     def _on_client_wakeup(self):
         self.overlay.show()
         self.overlay.raise_()
         self.overlay.activateWindow()
         self.overlay.force_topmost()
-        self.overlay.showStatus("🌸 Celestial Whisper Active!", "Double-click here for Settings • Drag with mouse")
+        if self.lyrics_manager.is_synced and self.lyrics_manager.current_lyrics:
+            prev, curr, nxt, idx = self.lyrics_manager.get_lines_at(self.spotify_worker.progress_sec)
+            self.overlay.setLyrics(prev, curr, nxt)
+        else:
+            self.overlay.showStatus("🌸 Celestial Whisper Active!", "Double-click here for Settings • Drag with mouse")
         self.tray.showMessage(
             "🌸 Celestial Whisper",
-            "Celestial Whisper is already running on your screen!",
+            "Celestial Whisper is active on your screen!",
             QSystemTrayIcon.MessageIcon.Information,
             3500
         )
