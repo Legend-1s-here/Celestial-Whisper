@@ -120,6 +120,26 @@ class FloatingLyricsOverlay(QWidget):
             animate=False
         )
 
+    def force_topmost(self):
+        try:
+            import ctypes
+            hwnd = int(self.winId())
+            HWND_TOPMOST = ctypes.c_void_p(-1)
+            SWP_NOMOVE = 0x0002
+            SWP_NOSIZE = 0x0001
+            SWP_NOACTIVATE = 0x0010
+            SWP_SHOWWINDOW = 0x0040
+            ctypes.windll.user32.SetWindowPos(ctypes.c_void_p(hwnd), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+        except Exception:
+            pass
+        self.show()
+        self.raise_()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.force_topmost()
+
+
     def apply_config(self, config: dict = None):
         if config:
             self.config = config
@@ -157,23 +177,6 @@ class FloatingLyricsOverlay(QWidget):
 
         self.move(x, y)
         self.config["position"] = mode
-        self.force_topmost()
-
-    def force_topmost(self):
-        try:
-            import ctypes
-            hwnd = int(self.winId())
-            HWND_TOPMOST = ctypes.c_void_p(-1)
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_NOACTIVATE = 0x0010
-            SWP_SHOWWINDOW = 0x0040
-            ctypes.windll.user32.SetWindowPos(ctypes.c_void_p(hwnd), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-        except Exception:
-            pass
-
-    def showEvent(self, event):
-        super().showEvent(event)
         self.force_topmost()
 
     def setLyrics(self, prev_line: str, curr_line: str, next_line: str, animate: bool = True):

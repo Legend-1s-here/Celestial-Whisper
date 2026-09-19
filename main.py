@@ -65,7 +65,7 @@ class ApplicationController:
             self.app.setWindowIcon(QIcon(str(ICON_PATH)))
 
         self.config = load_config()
-        self.lyrics_manager = LyricsManager(language_mode=self.config.get("language_mode", "english"))
+        self.lyrics_manager = LyricsManager(language_mode=self.config.get("language_mode", "romanized"))
         self.overlay = FloatingLyricsOverlay(self.config)
         self.overlay.show()
 
@@ -178,7 +178,7 @@ class ApplicationController:
         self.config = new_config
         save_config(self.config)
         self.overlay.apply_config(self.config)
-        self.lyrics_manager.set_language_mode(self.config.get("language_mode", "english"))
+        self.lyrics_manager.set_language_mode(self.config.get("language_mode", "romanized"))
 
     def start_preview_mode(self):
         import time
@@ -226,10 +226,12 @@ class ApplicationController:
         def fetch_task():
             found = self.lyrics_manager.fetch_lyrics(
                 artist, title,
-                language_mode=self.config.get("language_mode", "english")
+                language_mode=self.config.get("language_mode", "romanized")
             )
             if not found:
                 self.overlay.showStatus(f"🎵 {title}", "(No synchronized lyrics found)")
+            else:
+                QTimer.singleShot(0, lambda: self._on_position_updated(self.spotify_worker.progress_sec))
 
         threading.Thread(target=fetch_task, daemon=True).start()
 

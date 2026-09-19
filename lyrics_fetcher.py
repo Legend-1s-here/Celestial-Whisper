@@ -59,74 +59,109 @@ def fallback_to_hinglish(text: str) -> str:
     except Exception:
         return text
 
+def needs_romanization(text: str) -> bool:
+    """Returns True only if text contains non-Latin scripts (Devanagari, CJK, Hangul, Cyrillic, etc.)."""
+    for c in text:
+        code = ord(c)
+        if (0x0900 <= code <= 0x0D7F or   # Indic scripts (Devanagari, Bengali, Gurmukhi, Gujarati, Tamil, etc.)
+            0x3040 <= code <= 0x30FF or   # Japanese Hiragana & Katakana
+            0x4E00 <= code <= 0x9FFF or   # CJK Kanji / Hanzi
+            0xAC00 <= code <= 0xD7AF or   # Korean Hangul Syllables
+            0x1100 <= code <= 0x11FF or   # Korean Hangul Jamo
+            0x3130 <= code <= 0x318F or   # Korean Compatibility Jamo
+            0x0400 <= code <= 0x04FF or   # Cyrillic
+            0x0600 <= code <= 0x06FF or   # Arabic / Urdu / Persian
+            0x0E00 <= code <= 0x0E7F or   # Thai
+            0x0370 <= code <= 0x03FF):    # Greek
+            return True
+    return False
+
 def romanize_lyrics(lines: List[str]) -> List[str]:
     """
-    Converts Hindi Devanagari / foreign text into clean English alphabet (e.g. 'Yaad aati nahi').
-    Uses Google's dt=rm romanizer with local fallback.
+    Converts Hindi Devanagari / Japanese / foreign scripts into clean English alphabet (e.g. 'Yaad aati nahi').
+    Uses Google's dt=rm romanizer with ' ~~~ ' line preservation and local fallback.
     """
     if not lines:
         return []
-    non_ascii = sum(1 for line in lines for c in line if ord(c) > 127)
-    if non_ascii == 0:
-        return lines
+    if not any(needs_romanization(l) for l in lines):
+        return list(lines)
 
     non_empty = [(i, l) for i, l in enumerate(lines) if l.strip()]
     if not non_empty:
-        return lines
+        return list(lines)
 
     indices, texts = zip(*non_empty)
-    combined = "\n".join(texts)
-    url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=rm&q=" + urllib.parse.quote(combined)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=6) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            rom_text = ""
-            for item in data[0]:
-                if len(item) > 3 and item[3]:
-                    rom_text = item[3]
-                    break
-            if rom_text:
-                rom_lines = rom_text.splitlines()
-                result = list(lines)
-                for idx, r in zip(indices, rom_lines):
-                    result[idx] = r.strip()
-                return result
-    except Exception as e:
-        safe_log(f"[LyricsFetcher] Romanization error: {e}, falling back to local Hinglish rules")
+    result = list(lines)
 
-    # Local fallback
-    return [fallback_to_hinglish(l) for l in lines]
+    # Process in chunks of up to 25 lines so Google Translate preserves every line cleanly
+    CHUNK_SIZE = 25
+    for chunk_start in range(0, len(texts), CHUNK_SIZE):
+        chunk_indices = indices[chunk_start:chunk_start + CHUNK_SIZE]
+        chunk_texts = texts[chunk_start:chunk_start + CHUNK_SIZE]
+
+        chunk_success = False
+        try:
+            combined = " ~~~ ".join(chunk_texts)
+            url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=rm&q=" + urllib.parse.quote(combined)
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                rom_text = ""
+                if data and len(data) > 0 and data[0]:
+                    for item in data[0]:
+                        if item and len(item) > 3 and item[3]:
+                            rom_text = item[3]
+                            break
+                if rom_text:
+                    parts = [p.strip() for p in rom_text.split("~~~")]
+                    if len(parts) == len(chunk_texts):
+                        for idx, p in zip(chunk_indices, parts):
+                            result[idx] = p
+                        chunk_success = True
+        except Exception as e:
+            safe_log(f"[LyricsFetcher] Romanization chunk error: {e}")
+
+        # Fallback for this chunk if API call failed or line counts didn't align
+        if not chunk_success:
+            for idx, text in zip(chunk_indices, chunk_texts):
+                result[idx] = fallback_to_hinglish(text)
+
+    return result
 
 def translate_lines_to_english(lines: List[str]) -> List[str]:
-    """Translates lyrics to English meaning."""
+    """Translates foreign lyrics to English meaning line-by-line."""
     if not lines:
         return []
-    non_ascii = sum(1 for line in lines for c in line if ord(c) > 127)
-    if non_ascii == 0:
-        return lines
+    if not any(needs_romanization(l) for l in lines):
+        return list(lines)
 
     non_empty = [(i, l) for i, l in enumerate(lines) if l.strip()]
     if not non_empty:
-        return lines
+        return list(lines)
 
     indices, texts = zip(*non_empty)
-    combined = "\n".join(texts)
-    url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" + urllib.parse.quote(combined)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=6) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            translated_text = "".join([part[0] for part in data[0] if part and part[0]])
-            trans_lines = translated_text.splitlines()
+    result = list(lines)
 
-        result = list(lines)
-        for idx, t in zip(indices, trans_lines):
-            result[idx] = t.strip()
-        return result
-    except Exception as e:
-        safe_log(f"[LyricsFetcher] Translation error: {e}")
-        return lines
+    CHUNK_SIZE = 25
+    for chunk_start in range(0, len(texts), CHUNK_SIZE):
+        chunk_indices = indices[chunk_start:chunk_start + CHUNK_SIZE]
+        chunk_texts = texts[chunk_start:chunk_start + CHUNK_SIZE]
+
+        try:
+            combined = " ~~~ ".join(chunk_texts)
+            url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" + urllib.parse.quote(combined)
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                translated_text = "".join([part[0] for part in data[0] if part and part[0]])
+                parts = [p.strip() for p in translated_text.split("~~~")]
+                if len(parts) == len(chunk_texts):
+                    for idx, p in zip(chunk_indices, parts):
+                        result[idx] = p
+        except Exception as e:
+            safe_log(f"[LyricsFetcher] Translation chunk error: {e}")
+
+    return result
 
 class LyricsManager:
     def __init__(self, language_mode: str = "romanized"):
@@ -264,8 +299,10 @@ class LyricsManager:
         if not self.original_lyrics:
             return
 
-        has_foreign = any(ord(c) > 127 for line in self.original_lyrics for c in line.text)
+        has_foreign = any(needs_romanization(line.text) for line in self.original_lyrics)
         if not has_foreign:
+            self.romanized_lyrics = list(self.original_lyrics)
+            self.translated_lyrics = list(self.original_lyrics)
             return
 
         # 1. Generate Romanized English letters (Hinglish: 'Yaad aati nahi')

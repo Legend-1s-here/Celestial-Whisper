@@ -1,4 +1,4 @@
-﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
@@ -65,6 +65,9 @@ while ($true) {
         }
     } catch {
         [Console]::WriteLine('{"error": "poll_error"}')
+        try {
+            $manager = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+        } catch {}
     }
-    Start-Sleep -Milliseconds 600
+    Start-Sleep -Milliseconds 250
 }

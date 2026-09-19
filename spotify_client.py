@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import time
 import json
@@ -66,6 +66,8 @@ class SpotifyWorker(QThread):
                     line = line.strip()
                     if line.startswith("{") and line.endswith("}"):
                         data = json.loads(line)
+                        if "error" in data:
+                            continue
                         title = data.get("title", "").strip()
                         artist = data.get("artist", "").strip()
                         status = data.get("status", "")
