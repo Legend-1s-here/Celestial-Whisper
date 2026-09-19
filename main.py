@@ -16,8 +16,9 @@ try:
 except Exception:
     pass
 
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtGui import QIcon
 
 from config import load_config, save_config
@@ -44,6 +45,21 @@ class ApplicationController:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
+
+        # Single-instance enforcement: wake up existing instance if already running
+        self.server_name = "CelestialWhisperSingleInstance"
+        check_sock = QLocalSocket()
+        check_sock.connectToServer(self.server_name)
+        if check_sock.waitForConnected(400):
+            check_sock.write(b"WAKEUP\n")
+            check_sock.waitForBytesWritten(500)
+            check_sock.disconnectFromServer()
+            sys.exit(0)
+
+        self.server = QLocalServer(self.app)
+        self.server.removeServer(self.server_name)
+        self.server.listen(self.server_name)
+        self.server.newConnection.connect(self._on_single_instance_client)
 
         if ICON_PATH.exists():
             self.app.setWindowIcon(QIcon(str(ICON_PATH)))
@@ -81,16 +97,47 @@ class ApplicationController:
         self.tray.action_exit.triggered.connect(self.close_app)
         self.tray.show()
 
+        # Bring overlay to absolute top and show a friendly Windows notification toast
+        self.overlay.force_topmost()
+        QTimer.singleShot(500, lambda: self.tray.showMessage(
+            "🌸 Celestial Whisper Active",
+            "Floating lyrics are ready! Play any song on Spotify to begin.",
+            QSystemTrayIcon.MessageIcon.Information,
+            4000
+        ))
+
         # Overlay signals
         self.overlay.open_settings_requested.connect(self.show_settings)
         self.overlay.position_mode_changed.connect(self._on_overlay_position_changed)
         self.overlay.transition_mode_changed.connect(self._set_transition_mode)
+
+    def _on_single_instance_client(self):
+        client = self.server.nextPendingConnection()
+        if client:
+            client.readyRead.connect(self._on_client_wakeup)
+
+    def _on_client_wakeup(self):
+        self.overlay.show()
+        self.overlay.raise_()
+        self.overlay.activateWindow()
+        self.overlay.force_topmost()
+        self.overlay.showStatus("🌸 Celestial Whisper Active!", "Double-click here for Settings • Drag with mouse")
+        self.tray.showMessage(
+            "🌸 Celestial Whisper",
+            "Celestial Whisper is already running on your screen!",
+            QSystemTrayIcon.MessageIcon.Information,
+            3500
+        )
 
     def _toggle_overlay(self):
         if self.overlay.isVisible():
             self.overlay.hide()
         else:
             self.overlay.show()
+            self.overlay.raise_()
+            self.overlay.activateWindow()
+            self.overlay.force_topmost()
+            self.overlay.showStatus("🌸 Celestial Whisper Active", "Play any song on Spotify • Double-click for settings")
 
     def _set_position(self, mode: str):
         self.overlay.set_position_mode(mode)
