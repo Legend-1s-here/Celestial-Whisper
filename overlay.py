@@ -1,9 +1,84 @@
 import sys
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PyQt6.QtWidgets import (
-    QWidget, QLabel, QGraphicsDropShadowEffect, QMenu, QApplication
+    QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect, QMenu, QApplication
 )
 from PyQt6.QtGui import QFont, QColor, QCursor
+
+class LyricsFrame(QWidget):
+    """Container holding previous, current, and upcoming lyric lines."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.op_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.op_effect)
+
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(30, 10, 30, 10)
+        self.layout.setSpacing(6)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.lbl_prev = QLabel(self)
+        self.lbl_prev.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_prev.setWordWrap(True)
+
+        self.lbl_curr = QLabel(self)
+        self.lbl_curr.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_curr.setWordWrap(True)
+
+        self.lbl_next = QLabel(self)
+        self.lbl_next.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_next.setWordWrap(True)
+
+        for lbl in (self.lbl_prev, self.lbl_curr, self.lbl_next):
+            sh = QGraphicsDropShadowEffect(lbl)
+            sh.setBlurRadius(16)
+            sh.setColor(QColor(0, 0, 0, 255))
+            sh.setOffset(1, 2)
+            lbl.setGraphicsEffect(sh)
+            self.layout.addWidget(lbl)
+
+    def apply_style(self, font_size: int, text_color: str, context_mode: str):
+        font_family = "Segoe UI, Meiryo, 'Hiragino Sans', Montserrat, Helvetica, Arial, sans-serif"
+        sub_pt = max(12, int(font_size * 0.68))
+
+        sub_style = f"""
+            QLabel {{
+                color: rgba(255, 255, 255, 0.60);
+                font-family: {font_family};
+                font-size: {sub_pt}pt;
+                font-weight: 500;
+                background: transparent;
+                padding: 2px 0px;
+            }}
+        """
+
+        curr_style = f"""
+            QLabel {{
+                color: {text_color};
+                font-family: {font_family};
+                font-size: {font_size}pt;
+                font-weight: 700;
+                background: transparent;
+                padding: 4px 0px;
+                letter-spacing: 0.5px;
+            }}
+        """
+
+        self.lbl_prev.setStyleSheet(sub_style)
+        self.lbl_curr.setStyleSheet(curr_style)
+        self.lbl_next.setStyleSheet(sub_style)
+
+        if context_mode == "next_only":
+            self.lbl_prev.setVisible(False)
+            self.lbl_next.setVisible(True)
+        elif context_mode == "none":
+            self.lbl_prev.setVisible(False)
+            self.lbl_next.setVisible(False)
+        else:  # "both"
+            self.lbl_prev.setVisible(True)
+            self.lbl_next.setVisible(True)
+
 
 class FloatingLyricsOverlay(QWidget):
     open_settings_requested = pyqtSignal()
@@ -20,14 +95,7 @@ class FloatingLyricsOverlay(QWidget):
         self._pending_prev = ""
         self._pending_curr = ""
         self._pending_next = ""
-        self.anim = None
-
-        self.slot_h = 75
-        self.y_curr = 45
-        self.y_next = 120
-        self.y_out = -30
-        self.y_in = 195
-        self.y_prev = 15
+        self.anim_group = None
 
         self._init_ui()
         self.apply_config()
@@ -41,23 +109,9 @@ class FloatingLyricsOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
 
-        # Continuous canvas that smoothly glides without disappearing
-        self.canvas = QWidget(self)
-
-        self.lbl_out = QLabel(self.canvas)
-        self.lbl_prev = QLabel(self.canvas)
-        self.lbl_curr = QLabel(self.canvas)
-        self.lbl_next = QLabel(self.canvas)
-        self.lbl_in = QLabel(self.canvas)
-
-        for lbl in (self.lbl_out, self.lbl_prev, self.lbl_curr, self.lbl_next, self.lbl_in):
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setWordWrap(True)
-            sh = QGraphicsDropShadowEffect(lbl)
-            sh.setBlurRadius(16)
-            sh.setColor(QColor(0, 0, 0, 255))
-            sh.setOffset(1, 2)
-            lbl.setGraphicsEffect(sh)
+        self.frame_a = LyricsFrame(self)
+        self.frame_b = LyricsFrame(self)
+        self.frame_b.hide()
 
         self.setLyrics(
             prev_line="",
@@ -77,87 +131,11 @@ class FloatingLyricsOverlay(QWidget):
         height = max(220, self.config.get("window_height", 240))
 
         self.setFixedSize(width, height)
-        self.canvas.setGeometry(0, 0, width, height + 300)
+        self.frame_a.setGeometry(0, 0, width, height)
+        self.frame_b.setGeometry(0, 0, width, height)
 
-        font_family = "Segoe UI, Meiryo, 'Hiragino Sans', Montserrat, Helvetica, Arial, sans-serif"
-        sub_pt = max(12, int(font_size * 0.68))
-
-        sub_style = f"""
-            QLabel {{
-                color: rgba(255, 255, 255, 0.62);
-                font-family: {font_family};
-                font-size: {sub_pt}pt;
-                font-weight: 500;
-                background: transparent;
-                padding: 2px 0px;
-            }}
-        """
-
-        curr_style = f"""
-            QLabel {{
-                color: {text_color};
-                font-family: {font_family};
-                font-size: {font_size}pt;
-                font-weight: 700;
-                background: transparent;
-                padding: 2px 0px;
-                letter-spacing: 0.5px;
-            }}
-        """
-
-        self.lbl_out.setStyleSheet(sub_style)
-        self.lbl_prev.setStyleSheet(sub_style)
-        self.lbl_curr.setStyleSheet(curr_style)
-        self.lbl_next.setStyleSheet(sub_style)
-        self.lbl_in.setStyleSheet(sub_style)
-
-        pad_x = 40
-        label_w = width - (pad_x * 2)
-
-        if context_mode == "next_only":
-            self.slot_h = 74
-            self.y_curr = (height - (self.slot_h * 2)) // 2
-            self.y_next = self.y_curr + self.slot_h
-            self.y_out = self.y_curr - self.slot_h
-            self.y_in = self.y_next + self.slot_h
-
-            self.lbl_prev.setVisible(False)
-            self.lbl_next.setVisible(True)
-
-            self.lbl_out.setGeometry(pad_x, self.y_out, label_w, self.slot_h)
-            self.lbl_curr.setGeometry(pad_x, self.y_curr, label_w, self.slot_h)
-            self.lbl_next.setGeometry(pad_x, self.y_next, label_w, self.slot_h)
-            self.lbl_in.setGeometry(pad_x, self.y_in, label_w, self.slot_h)
-
-        elif context_mode == "both":
-            self.slot_h = 58
-            self.y_prev = (height - (self.slot_h * 3)) // 2
-            self.y_curr = self.y_prev + self.slot_h
-            self.y_next = self.y_curr + self.slot_h
-            self.y_out = self.y_prev - self.slot_h
-            self.y_in = self.y_next + self.slot_h
-
-            self.lbl_prev.setVisible(True)
-            self.lbl_next.setVisible(True)
-
-            self.lbl_out.setGeometry(pad_x, self.y_out, label_w, self.slot_h)
-            self.lbl_prev.setGeometry(pad_x, self.y_prev, label_w, self.slot_h)
-            self.lbl_curr.setGeometry(pad_x, self.y_curr, label_w, self.slot_h)
-            self.lbl_next.setGeometry(pad_x, self.y_next, label_w, self.slot_h)
-            self.lbl_in.setGeometry(pad_x, self.y_in, label_w, self.slot_h)
-
-        else:  # "none" (1 line)
-            self.slot_h = 75
-            self.y_curr = (height - self.slot_h) // 2
-            self.y_out = self.y_curr - self.slot_h
-            self.y_in = self.y_curr + self.slot_h
-
-            self.lbl_prev.setVisible(False)
-            self.lbl_next.setVisible(False)
-
-            self.lbl_out.setGeometry(pad_x, self.y_out, label_w, self.slot_h)
-            self.lbl_curr.setGeometry(pad_x, self.y_curr, label_w, self.slot_h)
-            self.lbl_in.setGeometry(pad_x, self.y_in, label_w, self.slot_h)
+        self.frame_a.apply_style(font_size, text_color, context_mode)
+        self.frame_b.apply_style(font_size, text_color, context_mode)
 
         pos_mode = self.config.get("position", "bottom")
         self.set_position_mode(pos_mode)
@@ -180,8 +158,8 @@ class FloatingLyricsOverlay(QWidget):
         self.move(x, y)
         self.config["position"] = mode
 
-    def setLyrics(self, prev_line: str, curr_line: str, next_line: str, incoming_line: str = "", animate: bool = True):
-        # Ignore redundant tick calls when lyric hasn't changed
+    def setLyrics(self, prev_line: str, curr_line: str, next_line: str, animate: bool = True):
+        # Ignore redundant calls when lyric has not advanced
         if curr_line == self._current_text:
             return
 
@@ -194,53 +172,101 @@ class FloatingLyricsOverlay(QWidget):
             self._apply_instant(prev_line, curr_line, next_line)
             return
 
-        # Stop any active animation immediately
-        if self.anim and self.anim.state() == QPropertyAnimation.State.Running:
-            self.anim.stop()
-            self._on_finished(self._pending_prev, self._pending_curr, self._pending_next)
+        # Stop any active animation immediately and finalize
+        if self.anim_group and self.anim_group.state() == QParallelAnimationGroup.State.Running:
+            self.anim_group.stop()
+            self._finalize_transition(self._pending_prev, self._pending_curr, self._pending_next)
 
         self._pending_prev = prev_line
         self._pending_curr = curr_line
         self._pending_next = next_line
 
         context_mode = self.config.get("context_mode", "next_only")
+        font_size = self.config.get("font_size", 24)
 
         if context_mode == "next_only":
-            self.lbl_out.setText(self.lbl_curr.text())
-            self.lbl_in.setText(incoming_line)
+            delta = self.frame_a.lbl_next.y() - self.frame_a.lbl_curr.y()
+            if delta <= 10:
+                delta = max(35, int(font_size * 1.5))
+
+            # Frame A keeps old current line floating up; clear next to prevent double vision
+            self.frame_a.lbl_next.setText("")
+
+            # Frame B has the incoming state
+            self.frame_b.lbl_prev.setText("")
+            self.frame_b.lbl_curr.setText(curr_line)
+            self.frame_b.lbl_next.setText(next_line)
+
         elif context_mode == "both":
-            self.lbl_out.setText(self.lbl_prev.text())
-            self.lbl_in.setText(incoming_line)
-        else:  # "none"
-            self.lbl_out.setText(self.lbl_curr.text())
-            self.lbl_in.setText(curr_line)
+            delta = self.frame_a.lbl_curr.y() - self.frame_a.lbl_prev.y()
+            if delta <= 10:
+                delta = max(35, int(font_size * 1.5))
 
-        self.canvas.move(0, 0)
-        self.anim = QPropertyAnimation(self.canvas, b"pos")
-        self.anim.setDuration(340)
-        self.anim.setStartValue(QPoint(0, 0))
-        self.anim.setEndValue(QPoint(0, -self.slot_h))
-        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.anim.finished.connect(lambda: self._on_finished(prev_line, curr_line, next_line))
-        self.anim.start()
+            self.frame_a.lbl_next.setText("")
 
-    def _on_finished(self, prev_line: str, curr_line: str, next_line: str):
-        self.lbl_prev.setText(prev_line)
-        self.lbl_curr.setText(curr_line)
-        self.lbl_next.setText(next_line)
-        self.lbl_out.setText("")
-        self.lbl_in.setText("")
-        self.canvas.move(0, 0)
+            self.frame_b.lbl_prev.setText(old_curr)
+            self.frame_b.lbl_curr.setText(curr_line)
+            self.frame_b.lbl_next.setText(next_line)
+
+        else:  # "none" (1 line)
+            delta = max(35, int(font_size * 1.4))
+            self.frame_b.lbl_curr.setText(curr_line)
+
+        self.frame_b.move(0, delta)
+        self.frame_b.op_effect.setOpacity(0.3)
+        self.frame_b.show()
+
+        self.anim_group = QParallelAnimationGroup(self)
+
+        a1 = QPropertyAnimation(self.frame_a, b"pos")
+        a1.setDuration(360)
+        a1.setStartValue(QPoint(0, 0))
+        a1.setEndValue(QPoint(0, -delta))
+        a1.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        o1 = QPropertyAnimation(self.frame_a.op_effect, b"opacity")
+        o1.setDuration(360)
+        o1.setStartValue(1.0)
+        o1.setEndValue(0.0)
+
+        a2 = QPropertyAnimation(self.frame_b, b"pos")
+        a2.setDuration(360)
+        a2.setStartValue(QPoint(0, delta))
+        a2.setEndValue(QPoint(0, 0))
+        a2.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        o2 = QPropertyAnimation(self.frame_b.op_effect, b"opacity")
+        o2.setDuration(360)
+        o2.setStartValue(0.3)
+        o2.setEndValue(1.0)
+
+        self.anim_group.addAnimation(a1)
+        self.anim_group.addAnimation(o1)
+        self.anim_group.addAnimation(a2)
+        self.anim_group.addAnimation(o2)
+
+        self.anim_group.finished.connect(lambda: self._finalize_transition(prev_line, curr_line, next_line))
+        self.anim_group.start()
+
+    def _finalize_transition(self, prev_line: str, curr_line: str, next_line: str):
+        self.frame_a.lbl_prev.setText(prev_line)
+        self.frame_a.lbl_curr.setText(curr_line)
+        self.frame_a.lbl_next.setText(next_line)
+        self.frame_a.move(0, 0)
+        self.frame_a.op_effect.setOpacity(1.0)
+        self.frame_b.hide()
+        self.frame_b.move(0, 0)
 
     def _apply_instant(self, prev_line: str, curr_line: str, next_line: str):
-        if self.anim and self.anim.state() == QPropertyAnimation.State.Running:
-            self.anim.stop()
-        self.lbl_prev.setText(prev_line)
-        self.lbl_curr.setText(curr_line)
-        self.lbl_next.setText(next_line)
-        self.lbl_out.setText("")
-        self.lbl_in.setText("")
-        self.canvas.move(0, 0)
+        if self.anim_group and self.anim_group.state() == QParallelAnimationGroup.State.Running:
+            self.anim_group.stop()
+        self.frame_a.lbl_prev.setText(prev_line)
+        self.frame_a.lbl_curr.setText(curr_line)
+        self.frame_a.lbl_next.setText(next_line)
+        self.frame_a.move(0, 0)
+        self.frame_a.op_effect.setOpacity(1.0)
+        self.frame_b.hide()
+        self.frame_b.move(0, 0)
 
     def showStatus(self, message: str, subtitle: str = ""):
         self.setLyrics("", message, subtitle, animate=False)

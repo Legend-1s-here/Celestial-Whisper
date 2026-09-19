@@ -161,8 +161,7 @@ class ApplicationController:
             curr = SAMPLE_LYRICS[active_idx][1]
             prev = SAMPLE_LYRICS[active_idx - 1][1] if active_idx > 0 else ""
             nxt = SAMPLE_LYRICS[active_idx + 1][1] if (active_idx + 1 < len(SAMPLE_LYRICS)) else ""
-            incoming = SAMPLE_LYRICS[active_idx + 2][1] if (active_idx + 2 < len(SAMPLE_LYRICS)) else ""
-            self.overlay.setLyrics(prev, curr, nxt, incoming_line=incoming)
+            self.overlay.setLyrics(prev, curr, nxt)
 
     def _on_track_changed(self, track_info: dict):
         if self.is_preview_mode:
@@ -192,8 +191,8 @@ class ApplicationController:
             return
 
         if self.lyrics_manager.is_synced and self.lyrics_manager.current_lyrics:
-            prev, curr, nxt, incoming, idx = self.lyrics_manager.get_lines_at(progress_sec)
-            self.overlay.setLyrics(prev, curr, nxt, incoming_line=incoming)
+            prev, curr, nxt, idx = self.lyrics_manager.get_lines_at(progress_sec)
+            self.overlay.setLyrics(prev, curr, nxt)
 
     def _on_status_message(self, msg: str):
         print(f"[MediaWorker] {msg}")
